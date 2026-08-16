@@ -1,0 +1,78 @@
+menu_open_button,光環設定
+window_title,光環設定
+window_title_with_tier,光環設定 — 品質 {0} {1}
+window_close,關閉視窗
+preview_zoom,縮放
+preview_reset_view,正面
+preview_no_weapon,手持武器後即可預覽
+preview_no_model,找不到玩家模型
+preview_no_parts,找不到武器部件，僅顯示模型
+preview_no_silhouette,此武器無法產生輪廓
+preview_error,預覽發生錯誤
+tier_section_label,選擇品質
+tier_follow_weapon,跟隨目前武器等級
+tier_follow_state,跟隨武器
+tier_manual_state,手動選擇
+tier_applies_to_held,→ 同時套用到手中武器
+tier_preview_only,→ 目前僅在預覽中生效
+status_weapon,武器：{0}
+status_grade,武器品質 {0}
+status_editing,編輯中：品質 {0}（{1}）
+section_color_inner,顏色 A — 內層
+section_color_outer,顏色 B — 外層
+section_shape,亮度與型態
+section_waves,同心波紋
+section_display,顯示設定
+field_alpha,不透明度
+field_intensity,顏色強度
+field_layers,層數
+field_spread,擴散距離
+field_wave_count,波紋數量
+field_wave_speed,波紋速度
+field_period,脈動週期
+field_wobble,晃動
+display_strength,強度
+display_subtle,弱
+display_normal,普通
+display_intense,強
+action_save,儲存設定
+action_random,隨機
+action_reset_defaults,回復預設
+action_saved,已儲存。下次啟動時會自動套用。
+action_save_failed,儲存失敗。
+action_random_applied,已為品質 {0} 套用隨機效果（種子 {1}）。
+action_reset_done,已回復預設值。需儲存才能保留。
+display_tier_on,為該等級開啟光環
+display_tier_off,為該等級關閉光環
+display_tier_disabled_notice,該品質的武器不會顯示光環。
+tier_grade_field,品質
+tier_add,+ 新增等級
+tier_remove,刪除等級
+tier_added,已新增品質 {0} 的等級。需儲存才能保留。
+tier_removed,已刪除品質 {0} 的等級。需儲存才能保留。
+tier_duplicate,品質 {0} 的等級已存在。
+tier_invalid_grade,請輸入數字形式的品質值。
+tier_builtin_locked,內建等級無法刪除。
+tier_out_of_range,品質值需在 0~{0} 之間。
+section_particles,粒子與拖尾
+field_emission_rate,粒子數量
+field_particle_size,粒子大小
+field_particle_lifetime,粒子壽命
+field_trail_on,開啟拖尾
+field_trail_off,關閉拖尾
+field_trail_length,拖尾長度
+field_trail_width,拖尾寬度
+section_presets,屬性範本
+preset_aurora,極光
+preset_fire,火焰
+preset_frost,冰霜
+preset_toxic,劇毒
+preset_void,虛空
+preset_shock,電擊
+preset_holy,神聖
+preset_blood,血氣
+preset_arcane,奧術
+preset_plasma,電漿
+preset_nature,自然
+preset_shadow,暗影
+preset_applied,已為品質 {0} 套用「{1}」範本。

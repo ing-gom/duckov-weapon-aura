@@ -1,0 +1,78 @@
+menu_open_button,光环设置
+window_title,光环设置
+window_title_with_tier,光环设置 — 品质 {0} {1}
+window_close,关闭窗口
+preview_zoom,缩放
+preview_reset_view,正面
+preview_no_weapon,手持武器后即可预览
+preview_no_model,未找到玩家模型
+preview_no_parts,未找到武器部件，仅显示模型
+preview_no_silhouette,该武器无法生成轮廓
+preview_error,预览出错
+tier_section_label,选择品质
+tier_follow_weapon,跟随当前武器等级
+tier_follow_state,跟随武器
+tier_manual_state,手动选择
+tier_applies_to_held,→ 同时应用到手中武器
+tier_preview_only,→ 当前仅在预览中生效
+status_weapon,武器：{0}
+status_grade,武器品质 {0}
+status_editing,编辑中：品质 {0}（{1}）
+section_color_inner,颜色 A — 内层
+section_color_outer,颜色 B — 外层
+section_shape,亮度与形态
+section_waves,同心波纹
+section_display,显示设置
+field_alpha,不透明度
+field_intensity,颜色强度
+field_layers,层数
+field_spread,扩散距离
+field_wave_count,波纹数量
+field_wave_speed,波纹速度
+field_period,脉动周期
+field_wobble,晃动
+display_strength,强度
+display_subtle,弱
+display_normal,普通
+display_intense,强
+action_save,保存设置
+action_random,随机
+action_reset_defaults,恢复默认
+action_saved,已保存。下次启动时会自动应用。
+action_save_failed,保存失败。
+action_random_applied,已为品质 {0} 应用随机效果（种子 {1}）。
+action_reset_done,已恢复默认值。需保存才能保留。
+display_tier_on,为该等级开启光环
+display_tier_off,为该等级关闭光环
+display_tier_disabled_notice,该品质的武器不会显示光环。
+tier_grade_field,品质
+tier_add,+ 添加等级
+tier_remove,删除等级
+tier_added,已添加品质 {0} 的等级。需保存才能保留。
+tier_removed,已删除品质 {0} 的等级。需保存才能保留。
+tier_duplicate,品质 {0} 的等级已存在。
+tier_invalid_grade,请输入数字形式的品质值。
+tier_builtin_locked,内置等级无法删除。
+tier_out_of_range,品质值需在 0~{0} 之间。
+section_particles,粒子与拖尾
+field_emission_rate,粒子数量
+field_particle_size,粒子大小
+field_particle_lifetime,粒子寿命
+field_trail_on,开启拖尾
+field_trail_off,关闭拖尾
+field_trail_length,拖尾长度
+field_trail_width,拖尾宽度
+section_presets,属性模板
+preset_aurora,极光
+preset_fire,火焰
+preset_frost,冰霜
+preset_toxic,剧毒
+preset_void,虚空
+preset_shock,电击
+preset_holy,神圣
+preset_blood,血气
+preset_arcane,奥术
+preset_plasma,等离子
+preset_nature,自然
+preset_shadow,暗影
+preset_applied,已为品质 {0} 应用“{1}”模板。
