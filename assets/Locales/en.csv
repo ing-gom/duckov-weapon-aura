@@ -184,3 +184,61 @@ muzzle_shape_empty,The grid is empty. Paint something first.
 muzzle_shape_full,You can keep up to {0} shapes.
 muzzle_shape_save_failed,Could not save the shape.
 muzzle_shape_not_drawn,That is not a shape you drew.
+tab_melee,Melee Slash
+window_title_melee,Melee Slash — Grade {0} {1}
+melee_section_grade,Weapon grade
+melee_follow_weapon,Follow the weapon you hold
+melee_follow_state,following weapon
+melee_manual_state,picked by hand
+melee_applies_to_held,→ Applies to the melee weapon you hold
+melee_preview_only,→ Preview only for now
+melee_status_weapon,"Melee: {0}"
+melee_status_grade,Weapon grade {0}
+melee_status_no_weapon,No melee weapon (hold one to see it here)
+melee_status_editing,Editing: grade {0} ({1})
+melee_on,Turn melee slash on
+melee_off,Turn melee slash off
+melee_off_notice,Melee slash is off
+melee_scope,Applies to
+melee_scope_player,My weapon
+melee_scope_everyone,Everyone
+melee_mode,Mode
+melee_mode_tint,Recolour
+melee_mode_overlay,Colour + scatter
+melee_mode_replace,Scatter only
+melee_grade_on,Enable slash for this grade
+melee_grade_off,Disable slash for this grade
+melee_grade_disabled_notice,This weapon grade keeps the game's own slash
+melee_section_look,Shape and presets
+melee_section_slash,Slash arc
+melee_section_sparks,Scatter
+melee_field_spark_count,Particle count
+melee_field_spark_size,Particle size
+melee_field_spark_distance,Travel distance
+melee_field_spark_arc,Fan width
+melee_field_spark_rise,Rise height
+melee_field_spark_spin,Spin speed
+melee_field_spark_duration,Lifetime
+melee_preset_slash,Blade shards
+melee_preset_ember,Embers
+melee_preset_petal,Petals
+melee_preset_applied,Applied the "{1}" preset to grade {0}.
+melee_preview_note,The real effect, captured and looped
+melee_preview_need_swing,Swing once and this weapon's real slash appears here
+melee_random_applied,Applied a random slash to grade {0} (seed {1}).
+melee_reset_done,Melee slash reset to defaults
+melee_field_spark_window,Emit window
+melee_field_spark_scatter,Scatter
+melee_field_spark_ring,Ring radius
+melee_slash_shape,Slash shape
+melee_slash_game,Game default
+melee_field_slash_facing,Arc facing
+melee_section_color_slash,Slash colour (the swing arc)
+melee_field_slash_alpha,Slash opacity
+melee_field_slash_intensity,Slash brightness
+melee_section_color_inner,Scatter inner colour
+melee_section_color_outer,Scatter outer colour
+melee_field_alpha,Scatter opacity
+melee_field_intensity,Scatter brightness
+section_texture,Shape texture
+section_texture_default,Default (none)

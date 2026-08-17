@@ -184,3 +184,61 @@ muzzle_shape_empty,画板是空的，请先涂色再保存。
 muzzle_shape_full,最多可保存 {0} 个形状。
 muzzle_shape_save_failed,形状保存失败。
 muzzle_shape_not_drawn,这不是你绘制的形状。
+tab_melee,近战挥砍
+window_title_melee,近战挥砍 — 品质 {0} {1}
+melee_section_grade,武器品质选择
+melee_follow_weapon,跟随手持武器品质
+melee_follow_state,跟随武器
+melee_manual_state,手动选择
+melee_applies_to_held,→ 立即应用到当前手持的近战武器
+melee_preview_only,→ 目前仅在预览中生效
+melee_status_weapon,近战武器：{0}
+melee_status_grade,武器品质 {0}
+melee_status_no_weapon,没有近战武器（手持近战武器后显示）
+melee_status_editing,正在编辑：品质 {0}（{1}）
+melee_on,开启近战挥砍效果
+melee_off,关闭近战挥砍效果
+melee_off_notice,近战挥砍效果已关闭
+melee_scope,应用对象
+melee_scope_player,我的武器
+melee_scope_everyone,所有武器
+melee_mode,方式
+melee_mode_tint,仅改颜色
+melee_mode_overlay,颜色 + 飞溅
+melee_mode_replace,仅飞溅
+melee_grade_on,开启该品质挥砍
+melee_grade_off,关闭该品质挥砍
+melee_grade_disabled_notice,该品质武器保持游戏原本的挥砍效果
+melee_section_look,形状与预设
+melee_section_slash,挥砍面片
+melee_section_sparks,飞溅
+melee_field_spark_count,粒子数量
+melee_field_spark_size,粒子大小
+melee_field_spark_distance,飞行距离
+melee_field_spark_arc,扇形宽度
+melee_field_spark_rise,上升高度
+melee_field_spark_spin,旋转速度
+melee_field_spark_duration,持续时间
+melee_preset_slash,刀刃碎片
+melee_preset_ember,火星
+melee_preset_petal,花瓣
+melee_preset_applied,已为品质 {0} 应用「{1}」预设。
+melee_preview_note,实际效果的实时循环播放
+melee_preview_need_swing,挥砍一次后这里会显示该武器的真实挥砍效果
+melee_random_applied,已为品质 {0} 的挥砍应用随机效果（种子 {1}）。
+melee_reset_done,近战挥砍已恢复默认值
+melee_field_spark_window,喷洒时间
+melee_field_spark_scatter,扩散程度
+melee_field_spark_ring,环形半径
+melee_slash_shape,挥砍形状
+melee_slash_game,游戏默认
+melee_field_slash_facing,弧线朝向
+melee_section_color_slash,挥砍颜色（挥出的弧线）
+melee_field_slash_alpha,挥砍不透明度
+melee_field_slash_intensity,挥砍亮度
+melee_section_color_inner,飞溅内侧颜色
+melee_section_color_outer,飞溅外侧颜色
+melee_field_alpha,飞溅不透明度
+melee_field_intensity,飞溅亮度
+section_texture,图案贴图
+section_texture_default,默认（无图案）

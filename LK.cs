@@ -25,6 +25,7 @@ public static class LK
         public const string TitleWithTier = "window_title_with_tier";
         public const string TitleTrail = "window_title_trail";
         public const string TitleMuzzle = "window_title_muzzle";
+        public const string TitleMelee = "window_title_melee";
         public const string Close = "window_close";
     }
 
@@ -34,6 +35,79 @@ public static class LK
         public const string Aura = "tab_aura";
         public const string Trail = "tab_trail";
         public const string Muzzle = "tab_muzzle";
+        public const string Melee = "tab_melee";
+    }
+
+    /// <summary>근접 참격 탭</summary>
+    public static class Melee
+    {
+        public const string SectionGrade = "melee_section_grade";
+        public const string FollowWeapon = "melee_follow_weapon";
+        public const string FollowState = "melee_follow_state";
+        public const string ManualState = "melee_manual_state";
+        public const string AppliesToHeld = "melee_applies_to_held";
+        public const string PreviewOnly = "melee_preview_only";
+
+        public const string StatusWeapon = "melee_status_weapon";
+        public const string StatusGrade = "melee_status_grade";
+        public const string StatusNoWeapon = "melee_status_no_weapon";
+        public const string StatusEditing = "melee_status_editing";
+
+        public const string On = "melee_on";
+        public const string Off = "melee_off";
+        public const string OffNotice = "melee_off_notice";
+
+        public const string Scope = "melee_scope";
+        public const string ScopePlayer = "melee_scope_player";
+        public const string ScopeEveryone = "melee_scope_everyone";
+
+        public const string Mode = "melee_mode";
+        public const string ModeTint = "melee_mode_tint";
+        public const string ModeReplace = "melee_mode_replace";
+        public const string ModeOverlay = "melee_mode_overlay";
+
+        public const string GradeOn = "melee_grade_on";
+        public const string GradeOff = "melee_grade_off";
+        public const string GradeDisabledNotice = "melee_grade_disabled_notice";
+
+        public const string SectionColorSlash = "melee_section_color_slash";
+        public const string FieldSlashAlpha = "melee_field_slash_alpha";
+        public const string FieldSlashIntensity = "melee_field_slash_intensity";
+
+        public const string SectionColorInner = "melee_section_color_inner";
+        public const string SectionColorOuter = "melee_section_color_outer";
+        public const string SectionLook = "melee_section_look";
+        public const string SectionSlash = "melee_section_slash";
+        public const string SectionSparks = "melee_section_sparks";
+
+        public const string FieldAlpha = "melee_field_alpha";
+        public const string FieldIntensity = "melee_field_intensity";
+
+        public const string FieldSparkCount = "melee_field_spark_count";
+        public const string FieldSparkSize = "melee_field_spark_size";
+        public const string FieldSparkDistance = "melee_field_spark_distance";
+        public const string FieldSparkArc = "melee_field_spark_arc";
+        public const string FieldSparkRise = "melee_field_spark_rise";
+        public const string FieldSparkSpin = "melee_field_spark_spin";
+        public const string FieldSparkDuration = "melee_field_spark_duration";
+        public const string FieldSparkWindow = "melee_field_spark_window";
+        public const string FieldSparkScatter = "melee_field_spark_scatter";
+        public const string FieldSparkRing = "melee_field_spark_ring";
+
+        // ── 참격 판에 씌우는 그림 ──
+        public const string SlashShape = "melee_slash_shape";
+        public const string SlashGame = "melee_slash_game";
+        public const string FieldSlashFacing = "melee_field_slash_facing";
+
+        public const string PresetSlash = "melee_preset_slash";
+        public const string PresetEmber = "melee_preset_ember";
+        public const string PresetPetal = "melee_preset_petal";
+        public const string PresetApplied = "melee_preset_applied";
+
+        public const string PreviewNote = "melee_preview_note";
+
+        public const string RandomApplied = "melee_random_applied";
+        public const string ResetDone = "melee_reset_done";
     }
 
     /// <summary>총구 화염 탭</summary>
@@ -219,6 +293,10 @@ public static class LK
         public const string Display = "section_display";
         public const string Particles = "section_particles";
         public const string Presets = "section_presets";
+
+        /// <summary>오라 면에 씌우는 그림</summary>
+        public const string Texture = "section_texture";
+        public const string TextureDefault = "section_texture_default";
     }
 
     /// <summary>속성 템플릿 12종의 이름</summary>

@@ -1138,7 +1138,9 @@ namespace WeaponAura.Systems
             if (_materialCache.TryGetValue(key, out var cached) && cached != null)
                 return cached;
 
-            var texture = LoadTexture(key);
+            // 내장 도형 · 직접 그린 도형 · PNG를 한 곳에서 찾습니다. 예전에는 여기서
+            // 파일만 봐서, 설정 창에서 그린 도형을 오라에 고르면 아무 일도 없었습니다.
+            var texture = MuzzleFlashShapes.ResolveByName(key);
             if (texture == null)
                 return SharedMaterial;
 

@@ -69,6 +69,28 @@ namespace WeaponAura.Systems
             return Get(shape);
         }
 
+        /// <summary>
+        /// 이름 하나로 도형을 찾습니다 — 내장 도형 · 직접 그린 도형 · vfx_textures의 PNG 순.
+        ///
+        /// 세 군데를 뒤지는 순서가 기능마다 다르면 같은 이름이 탭에 따라 다른 그림이 됩니다.
+        /// 총구 화염 · 근접 참격 · 무기 오라가 모두 이 한 곳을 지나갑니다.
+        /// </summary>
+        public static Texture2D? ResolveByName(string? name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            if (Enum.TryParse(name, out MuzzleFlashShape shape) && Array.IndexOf(All, shape) >= 0)
+                return Get(shape);
+
+            // 설정 창에서 방금 그린 것이 파일보다 눈에 밟히는 게 자연스럽습니다.
+            var drawn = CustomShapes.GetTexture(name!);
+            if (drawn != null)
+                return drawn;
+
+            return WeaponAuraResources.LoadTexture(name!);
+        }
+
         public static Texture2D Get(MuzzleFlashShape shape)
         {
             if (_textures.TryGetValue(shape, out var cached) && cached != null)

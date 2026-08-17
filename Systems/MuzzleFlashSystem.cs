@@ -145,9 +145,9 @@ namespace WeaponAura.Systems
         /// <summary>
         /// 게임이 방금 만든 총구 화염의 <b>형태는 그대로 두고</b> 색과 크기만 바꿉니다.
         ///
-        /// 총마다 다르게 만들어 둔 프리팹이라 안에 무엇이 들었는지 알 수 없습니다.
-        /// 그래서 색이 나올 수 있는 곳을 전부 훑습니다 — 파티클 시작색, 수명 곡선,
-        /// 메시 렌더러의 머티리얼, 라이트. 없는 것은 그냥 지나갑니다.
+        /// 실제 물들이기는 <see cref="EffectTint"/>가 합니다 — 근접 참격도 같은 문제를
+        /// 풀기 때문에 한 곳에 모아 두었습니다. 여기서는 프로필 값을 색으로 풀고,
+        /// 첫 발사 때 한 번 실측 로그를 남깁니다.
         /// </summary>
         public static void TintExisting(GameObject? flash, MuzzleFlashProfile profile)
         {
@@ -162,56 +162,9 @@ namespace WeaponAura.Systems
                     out Color outer, out float outerAlpha);
 
                 float alpha = Mathf.Clamp01(Mathf.Min(innerAlpha, outerAlpha));
-
                 float scale = Mathf.Max(0.05f, profile.sizeScale);
-                if (!Mathf.Approximately(scale, 1f))
-                    flash.transform.localScale *= scale;
 
-                foreach (var system in flash.GetComponentsInChildren<ParticleSystem>(true))
-                {
-                    if (system == null)
-                        continue;
-
-                    var main = system.main;
-                    main.startColor = new ParticleSystem.MinMaxGradient(
-                        WithAlpha(inner, alpha), WithAlpha(outer, alpha));
-
-                    // 수명 곡선에 원본 색이 남아 있으면 우리 색과 곱해져서 탁해집니다.
-                    // 알파(페이드 모양)는 살리고 색만 흰색으로 눕혀 둡니다.
-                    var overLifetime = system.colorOverLifetime;
-                    if (overLifetime.enabled)
-                        overLifetime.color = Whiten(overLifetime.color);
-
-                    // 속도에 따라 색을 바꾸는 모듈이 켜져 있으면 그쪽에도 원본 색이 남습니다.
-                    var bySpeed = system.colorBySpeed;
-                    if (bySpeed.enabled)
-                        bySpeed.color = Whiten(bySpeed.color);
-                }
-
-                foreach (var renderer in flash.GetComponentsInChildren<Renderer>(true))
-                {
-                    if (renderer == null)
-                        continue;
-
-                    if (renderer is ParticleSystemRenderer)
-                    {
-                        // 파티클의 최종 색은 "정점 색 × 머티리얼 색"입니다. 정점 색에 우리 색을
-                        // 넣어도 머티리얼에 주황색이 박혀 있으면 그게 곱해져서 결국 주황으로
-                        // 보입니다("터지는 부분만 안 바뀐다"가 이것이었습니다).
-                        // 머티리얼 쪽은 흰색으로 눕혀서 정점 색만 남깁니다.
-                        TintRenderer(renderer, Color.white, 1f, emission: false);
-                        continue;
-                    }
-
-                    // 메시·빌보드는 정점 색이 없으므로 머티리얼에 직접 색을 넣습니다.
-                    TintRenderer(renderer, inner, alpha, emission: true);
-                }
-
-                foreach (var light in flash.GetComponentsInChildren<Light>(true))
-                {
-                    if (light != null)
-                        light.color = outer;
-                }
+                EffectTint.Apply(flash, inner, outer, alpha, scale);
 
                 LogFirstFlash(flash, profile, scale);
             }
@@ -221,89 +174,6 @@ namespace WeaponAura.Systems
                 UnityEngine.Debug.LogWarning($"[WeaponAura] 총구 화염 색 변경 실패: {ex.Message}");
 #endif
             }
-        }
-
-        /// <summary>셰이더마다 색 프로퍼티 이름이 달라서 알려진 이름을 전부 시도합니다.</summary>
-        private static readonly string[] ColorProperties =
-        {
-            "_TintColor", "_Color", "_BaseColor", "_Tint", "_MainColor", "_TintColor1",
-        };
-
-        private static void TintRenderer(Renderer renderer, Color color, float alpha, bool emission)
-        {
-            var material = renderer.sharedMaterial;
-            if (material == null)
-                return;
-
-            var block = new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(block);
-
-            var tinted = new Color(color.r, color.g, color.b, alpha);
-            bool touched = false;
-
-            foreach (string property in ColorProperties)
-            {
-                if (!material.HasProperty(property))
-                    continue;
-
-                block.SetColor(property, tinted);
-                touched = true;
-            }
-
-            // 파티클에 발광 색까지 흰색으로 밀면 오히려 하얗게 떠오릅니다.
-            if (emission && material.HasProperty("_EmissionColor"))
-            {
-                block.SetColor("_EmissionColor", tinted);
-                touched = true;
-            }
-
-            if (touched)
-                renderer.SetPropertyBlock(block);
-        }
-
-        /// <summary>색은 흰색으로, 알파(페이드 모양)는 그대로 두고 돌려줍니다.</summary>
-        private static ParticleSystem.MinMaxGradient Whiten(ParticleSystem.MinMaxGradient source)
-        {
-            switch (source.mode)
-            {
-                case ParticleSystemGradientMode.Color:
-                    return new ParticleSystem.MinMaxGradient(WhiteWithAlpha(source.color));
-
-                case ParticleSystemGradientMode.TwoColors:
-                    return new ParticleSystem.MinMaxGradient(
-                        WhiteWithAlpha(source.colorMin), WhiteWithAlpha(source.colorMax));
-
-                case ParticleSystemGradientMode.Gradient:
-                    return new ParticleSystem.MinMaxGradient(WhitenGradient(source.gradient));
-
-                case ParticleSystemGradientMode.TwoGradients:
-                    return new ParticleSystem.MinMaxGradient(
-                        WhitenGradient(source.gradientMin), WhitenGradient(source.gradientMax));
-
-                default:
-                    return source;
-            }
-        }
-
-        private static Color WhiteWithAlpha(Color color)
-        {
-            return new Color(1f, 1f, 1f, color.a);
-        }
-
-        private static Gradient WhitenGradient(Gradient source)
-        {
-            var result = new Gradient();
-
-            if (source == null)
-                return result;
-
-            var colorKeys = source.colorKeys;
-            for (int i = 0; i < colorKeys.Length; i++)
-                colorKeys[i].color = Color.white;
-
-            result.SetKeys(colorKeys, source.alphaKeys);
-            result.mode = source.mode;
-            return result;
         }
 
         /// <summary>
@@ -317,64 +187,10 @@ namespace WeaponAura.Systems
 
             _loggedFirstTint = true;
 
-            var particles = flash.GetComponentsInChildren<ParticleSystem>(true);
-            var renderers = flash.GetComponentsInChildren<Renderer>(true);
-            var lights = flash.GetComponentsInChildren<Light>(true);
-
-            Bounds bounds = default;
-            bool hasBounds = false;
-            foreach (var renderer in renderers)
-            {
-                if (renderer == null)
-                    continue;
-
-                if (!hasBounds)
-                {
-                    bounds = renderer.bounds;
-                    hasBounds = true;
-                }
-                else
-                {
-                    bounds.Encapsulate(renderer.bounds);
-                }
-            }
-
-            var detail = new System.Text.StringBuilder();
-            foreach (var renderer in renderers)
-            {
-                if (renderer == null)
-                    continue;
-
-                var material = renderer.sharedMaterial;
-                string shader = material != null && material.shader != null
-                    ? material.shader.name : "(머티리얼 없음)";
-
-                // 색을 넣을 구멍이 하나도 없으면 프로퍼티 블록으로는 손댈 수 없습니다.
-                // 그때는 색이 텍스처에 구워져 있다는 뜻이라, 원인 파악에 이 목록이 필요합니다.
-                var found = new List<string>();
-                if (material != null)
-                {
-                    foreach (string property in ColorProperties)
-                    {
-                        if (material.HasProperty(property))
-                            found.Add(property);
-                    }
-
-                    if (material.HasProperty("_EmissionColor"))
-                        found.Add("_EmissionColor");
-                }
-
-                detail.Append($" | {renderer.GetType().Name} '{renderer.gameObject.name}' " +
-                              $"셰이더={shader} 색속성=" +
-                              (found.Count > 0 ? string.Join("+", found) : "없음"));
-            }
-
             UnityEngine.Debug.Log(
-                $"[WeaponAura] 게임 총구 화염 실측: '{flash.name}' " +
-                $"파티클={particles.Length} 렌더러={renderers.Length} 라이트={lights.Length} " +
-                $"월드크기={(hasBounds ? bounds.size.ToString("0.###") : "없음")} " +
-                $"총구스케일={flash.transform.lossyScale.ToString("0.###")} " +
-                $"적용배율={scale:0.##} (등급 {profile.grade} {profile.name})" + detail);
+                $"[WeaponAura] 게임 총구 화염 실측: '{flash.name}' {EffectTint.Describe(flash)} " +
+                $"| 총구스케일={flash.transform.lossyScale.ToString("0.###")} " +
+                $"적용배율={scale:0.##} (등급 {profile.grade} {profile.name})");
         }
 
         /// <summary>

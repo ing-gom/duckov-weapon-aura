@@ -184,3 +184,61 @@ muzzle_shape_empty,판이 비어 있습니다. 칸을 칠한 뒤 저장하세요
 muzzle_shape_full,도형은 {0}개까지 저장할 수 있습니다.
 muzzle_shape_save_failed,도형을 저장하지 못했습니다.
 muzzle_shape_not_drawn,직접 그린 도형이 아닙니다.
+tab_melee,근접 참격
+window_title_melee,근접 참격 — 등급 {0} {1}
+melee_section_grade,무기 등급 선택
+melee_follow_weapon,든 무기 등급 따라가기
+melee_follow_state,무기 따라감
+melee_manual_state,직접 선택
+melee_applies_to_held,→ 지금 든 근접무기에 바로 반영됩니다
+melee_preview_only,→ 지금은 미리보기에만 반영됩니다
+melee_status_weapon,근접무기: {0}
+melee_status_grade,무기 등급 {0}
+melee_status_no_weapon,근접무기 없음 (근접무기를 들면 표시됩니다)
+melee_status_editing,편집 중: 등급 {0} ({1})
+melee_on,근접 참격 켜기
+melee_off,근접 참격 끄기
+melee_off_notice,근접 참격이 꺼져 있습니다
+melee_scope,적용 대상
+melee_scope_player,내 무기
+melee_scope_everyone,모든 무기
+melee_mode,방식
+melee_mode_tint,색만 바꾸기
+melee_mode_overlay,색 + 흩뿌림
+melee_mode_replace,흩뿌림만
+melee_grade_on,이 등급 참격 켜기
+melee_grade_off,이 등급 참격 끄기
+melee_grade_disabled_notice,이 등급 무기는 게임 원래 참격 그대로 나갑니다
+melee_section_look,모양과 프리셋
+melee_section_slash,참격 판
+melee_section_sparks,흩뿌림
+melee_field_spark_count,알갱이 개수
+melee_field_spark_size,알갱이 크기
+melee_field_spark_distance,날아가는 거리
+melee_field_spark_arc,부채꼴 폭
+melee_field_spark_rise,떠오르는 높이
+melee_field_spark_spin,회전 속도
+melee_field_spark_duration,남아 있는 시간
+melee_preset_slash,칼날 파편
+melee_preset_ember,불티
+melee_preset_petal,꽃잎
+melee_preset_applied,등급 {0}에 "{1}" 프리셋을 적용했습니다.
+melee_preview_note,실제 이펙트를 그대로 찍어 반복 재생합니다
+melee_preview_need_swing,한 번 휘두르면 그 무기의 실제 참격이 여기 나옵니다
+melee_random_applied,등급 {0} 참격에 랜덤 조합을 적용했습니다 (시드 {1}).
+melee_reset_done,근접 참격을 기본값으로 되돌렸습니다
+melee_field_spark_window,뿌리는 시간
+melee_field_spark_scatter,흩어짐
+melee_field_spark_ring,고리 위치
+melee_slash_shape,참격 모양
+melee_slash_game,게임 기본
+melee_field_slash_facing,호 방향
+melee_section_color_slash,참격 색 (휘두를 때 나오는 호)
+melee_field_slash_alpha,참격 투명도
+melee_field_slash_intensity,참격 밝기
+melee_section_color_inner,흩뿌림 안쪽 색
+melee_section_color_outer,흩뿌림 바깥 색
+melee_field_alpha,흩뿌림 투명도
+melee_field_intensity,흩뿌림 밝기
+section_texture,모양 그림
+section_texture_default,기본 (그림 없음)

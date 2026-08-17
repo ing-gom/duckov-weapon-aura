@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("WeaponAura")]
-[assembly: AssemblyDescription("무기 오라 + 탄환 잔상 + 총구 화염 이펙트")]
+[assembly: AssemblyDescription("무기 오라 + 탄환 잔상 + 총구 화염 + 근접 참격 이펙트")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("WeaponAura")]
@@ -13,5 +13,5 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 [assembly: Guid("b7e4f2a1-3c65-4d18-9f20-5a8e1c7d4b93")]
 
-[assembly: AssemblyVersion("1.3.0.0")]
-[assembly: AssemblyFileVersion("1.3.0.0")]
+[assembly: AssemblyVersion("1.4.0.0")]
+[assembly: AssemblyFileVersion("1.4.0.0")]

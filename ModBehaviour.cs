@@ -22,6 +22,7 @@ namespace WeaponAura
             AuraSettings.Load();
             BulletTrailSettings.Load();
             MuzzleFlashSettings.Load();
+            MeleeSlashSettings.Load();
         }
 
         /// <summary>
@@ -46,6 +47,7 @@ namespace WeaponAura
                 AuraSettings.Load();
                 BulletTrailSettings.Load();
                 MuzzleFlashSettings.Load();
+                MeleeSlashSettings.Load();
             });
 
             // 씬이 바뀌면 ModEnabled가 다시 불릴 수 있습니다. 그냥 += 하면 구독이 쌓여서
@@ -58,16 +60,20 @@ namespace WeaponAura
                 BulletTrailSettings.OnChanged += OnTrailSettingsChanged;
                 MuzzleFlashSettings.OnChanged -= OnMuzzleSettingsChanged;
                 MuzzleFlashSettings.OnChanged += OnMuzzleSettingsChanged;
+                MeleeSlashSettings.OnChanged -= OnMeleeSettingsChanged;
+                MeleeSlashSettings.OnChanged += OnMeleeSettingsChanged;
             });
 
             // 저장해 둔 색 설정이 있으면 자동으로 복원합니다.
             Step("오라 프로필 로드", WeaponAuraProfiles.AutoLoad);
             Step("탄환 잔상 프로필 로드", BulletTrailProfiles.AutoLoad);
             Step("총구 화염 프로필 로드", MuzzleFlashProfiles.AutoLoad);
+            Step("근접 참격 프로필 로드", MeleeSlashProfiles.AutoLoad);
 
             // 발사되는 총알에 탄환 등급 색 잔상 붙이기
             Step("탄환 잔상 패치", BulletTrailPatch.ApplyPatches);
             Step("총구 화염 패치", MuzzleFlashPatch.ApplyPatches);
+            Step("근접 참격 패치", MeleeSlashPatch.ApplyPatches);
 
 #if DEBUG
             UnityEngine.Debug.Log("[WeaponAura] 모드 활성화 — Ctrl+Shift+F8로 튜닝 패널");
@@ -96,6 +102,7 @@ namespace WeaponAura
                 AuraSettings.OnChanged -= OnSettingsChanged;
                 BulletTrailSettings.OnChanged -= OnTrailSettingsChanged;
                 MuzzleFlashSettings.OnChanged -= OnMuzzleSettingsChanged;
+                MeleeSlashSettings.OnChanged -= OnMeleeSettingsChanged;
             });
 
             Step("오라 정리", WeaponAuraSystem.Clear);
@@ -103,6 +110,8 @@ namespace WeaponAura
             Step("탄환 잔상 정리", BulletTrailSystem.Dispose);
             Step("총구 화염 패치 해제", MuzzleFlashPatch.RemovePatches);
             Step("총구 화염 정리", MuzzleFlashSystem.Dispose);
+            Step("근접 참격 패치 해제", MeleeSlashPatch.RemovePatches);
+            Step("근접 참격 정리", MeleeSlashSystem.Dispose);
             Step("입력 차단 패치 해제", PlayerInputBlockPatch.RemovePatches);
             Step("일시정지 메뉴 버튼 해제", PauseMenuButton.Uninstall);
 #if DEBUG
@@ -119,6 +128,9 @@ namespace WeaponAura
 
                 // 설정 창에 보여 줄 장착 탄약 정보 (내부에서 0.25초 간격으로 스로틀링)
                 BulletTrailSystem.Tick();
+
+                // 설정 창에 보여 줄 근접무기 정보 (같은 간격으로 스로틀링)
+                MeleeSlashSystem.Tick();
 
                 // 일시정지 메뉴가 떠 있으면 버튼이 붙어 있는지 확인 (0.5초 간격)
                 PauseMenuButton.Tick();
@@ -148,6 +160,7 @@ namespace WeaponAura
             {
                 BulletTrailSystem.LateTick();
                 MuzzleFlashSystem.LateTick();
+                MeleeSlashSystem.LateTick();
             }
             catch (Exception ex)
             {
@@ -204,6 +217,13 @@ namespace WeaponAura
         {
             if (!MuzzleFlashSettings.Enabled)
                 MuzzleFlashSystem.Clear();
+        }
+
+        /// <summary>근접 참격을 끄면 지금 흩날리는 알갱이도 바로 걷어냅니다.</summary>
+        private void OnMeleeSettingsChanged()
+        {
+            if (!MeleeSlashSettings.Enabled)
+                MeleeSlashSystem.Clear();
         }
     }
 }

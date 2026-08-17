@@ -94,6 +94,19 @@ namespace WeaponAura.UI
                 UnityEngine.Debug.LogError($"[WeaponAura] 총구 화염 탭 구성 실패: {ex}");
             }
 
+            try
+            {
+                BuildMeleeBody(panel.transform);
+            }
+            catch (Exception ex)
+            {
+                if (_meleeBody != null)
+                    _meleeBody.SetActive(false);
+
+                _meleeBody = null;
+                UnityEngine.Debug.LogError($"[WeaponAura] 근접 참격 탭 구성 실패: {ex}");
+            }
+
             BuildFooter(panel.transform);
 
             ApplyFont(panel.gameObject);
@@ -122,6 +135,7 @@ namespace WeaponAura.UI
             AddTabButton(header, L.Tab.Aura, WindowTab.Aura);
             AddTabButton(header, L.Tab.Trail, WindowTab.Trail);
             AddTabButton(header, L.Tab.Muzzle, WindowTab.Muzzle);
+            AddTabButton(header, L.Tab.Melee, WindowTab.Melee);
 
             MakeButton(header, L.Window.Close, 110f, Hide, ButtonColor);
         }
@@ -132,9 +146,15 @@ namespace WeaponAura.UI
         /// 두 기능은 건드리는 값이 완전히 달라서(무기 등급 vs 탄약 등급) 한 화면에 겹쳐 놓으면
         /// 어느 등급을 편집 중인지 알 수 없게 됩니다. 본문을 통째로 갈아 끼웁니다.
         /// </summary>
+        /// <summary>
+        /// 탭 폭. 네 개가 제목·닫기와 한 줄에 들어가야 합니다 —
+        /// 예전 값(168)으로 네 개를 넣으면 제목이 밀려 잘립니다.
+        /// </summary>
+        private const float TabButtonWidth = 132f;
+
         private void AddTabButton(Transform parent, string label, WindowTab tab)
         {
-            var button = MakeButton(parent, label, 168f, () => SelectTab(tab), ButtonColor);
+            var button = MakeButton(parent, label, TabButtonWidth, () => SelectTab(tab), ButtonColor);
             _tabButtons.Add(new KeyValuePair<WindowTab, Button>(tab, button));
         }
 
@@ -484,6 +504,12 @@ namespace WeaponAura.UI
             AddSectionLabel(parent, L.Section.Presets);
             BuildPresetGrid(parent);
 
+            // 오라도 면에 그림을 씌울 수 있습니다. 예전에는 프로필에 값만 있고 고를 곳이
+            // 없어서 개발용 IMGUI 패널로만 닿았습니다.
+            AddSectionLabel(parent, L.Section.Texture);
+            BuildAuraTextureRow(parent);
+            BuildShapeEditor(parent);
+
             AddSectionLabel(parent, L.Section.Particles);
             BuildTrailRow(parent);
             AddSlider(parent, L.Field.EmissionRate, 0f, 80f, "0",
@@ -498,6 +524,91 @@ namespace WeaponAura.UI
                 p => p.trailLifetime, (p, v) => p.trailLifetime = v, rebuild: true);
             AddSlider(parent, L.Field.TrailWidth, 0.05f, 1.5f, "0.00",
                 p => p.trailWidth, (p, v) => p.trailWidth = v, rebuild: true);
+        }
+
+        /// <summary>
+        /// 오라 면에 씌울 그림 고르기.
+        ///
+        /// 총구 화염·근접 참격과 <b>같은 목록</b>을 씁니다 — 내장 도형, 아래 판에서 직접 그린
+        /// 도형, assets/vfx_textures의 PNG. 하나를 그려 세 곳에 돌려 쓸 수 있어야 합니다.
+        /// </summary>
+        private void BuildAuraTextureRow(Transform parent)
+        {
+            var row = MakeRect("AuraTextureRow", parent);
+            SetHeight(row, 40f);
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+
+            MakeButton(row, L.Muzzle.ShapePrev, 56f, () => CycleAuraTexture(-1), ButtonColor);
+
+            _auraTextureLabel = MakeText("AuraTextureName", row, "-", 19, TextColor,
+                TextAlignmentOptions.Center);
+            _auraTextureLabel.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+
+            MakeButton(row, L.Muzzle.ShapeNext, 56f, () => CycleAuraTexture(1), ButtonColor);
+
+            // 폴더에 PNG를 새로 넣었을 때 게임을 껐다 켜지 않아도 되게.
+            MakeButton(row, L.Muzzle.ShapeRescan, 56f, () =>
+            {
+                WeaponAuraResources.GetTextureNames(refresh: true);
+                RefreshAuraTextureLabel();
+            }, ButtonColor);
+        }
+
+        /// <summary>맨 앞이 "기본"(그림 없음)이고, 그 뒤로 세 기능이 공유하는 목록이 이어집니다.</summary>
+        private static List<string> AuraTextureChoices()
+        {
+            var choices = new List<string> { "" };
+            choices.AddRange(MuzzleShapeChoices());
+            return choices;
+        }
+
+        private void CycleAuraTexture(int delta)
+        {
+            var profile = CurrentProfile();
+            if (profile == null)
+                return;
+
+            var choices = AuraTextureChoices();
+            int index = choices.IndexOf(profile.textureName ?? "");
+            if (index < 0)
+                index = 0;
+
+            profile.textureName = choices[(int)Mathf.Repeat(index + delta, choices.Count)];
+
+            RefreshAuraTextureLabel();
+
+            // 텍스처는 머티리얼이 바뀌는 것이라 값만 반영해서는 안 되고 다시 만들어야 합니다.
+            ApplyEdit(true);
+        }
+
+        private void RefreshAuraTextureLabel()
+        {
+            if (_auraTextureLabel == null)
+                return;
+
+            var profile = CurrentProfile();
+            if (profile == null)
+                return;
+
+            string picked = profile.textureName ?? "";
+
+            if (string.IsNullOrEmpty(picked))
+            {
+                _auraTextureLabel.text = L.Section.TextureDefault;
+                return;
+            }
+
+            _auraTextureLabel.text =
+                Enum.TryParse(picked, out MuzzleFlashShape shape) &&
+                Array.IndexOf(MuzzleFlashShapes.All, shape) >= 0
+                    ? LocalizedShapeName(shape)
+                    : picked;
         }
 
         /// <summary>

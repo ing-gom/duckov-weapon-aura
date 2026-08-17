@@ -282,6 +282,7 @@ namespace WeaponAura.UI
             HighlightTierButton();
             RefreshDisplayRow();
             RefreshRemoveButton();
+            RefreshAuraTextureLabel();
         }
 
         // ── 켜기/끄기 · 세기 ────────────────────────────────────────
@@ -542,18 +543,20 @@ namespace WeaponAura.UI
             bool auraSaved = WeaponAuraProfiles.Save(out string auraPath);
             bool trailSaved = BulletTrailProfiles.Save(out string trailPath);
             bool muzzleSaved = MuzzleFlashProfiles.Save(out string muzzlePath);
+            bool meleeSaved = MeleeSlashProfiles.Save(out string meleePath);
 
-            if (auraSaved && trailSaved && muzzleSaved)
+            if (auraSaved && trailSaved && muzzleSaved && meleeSaved)
             {
                 UnityEngine.Debug.Log(
-                    $"[WeaponAura] 설정을 저장했습니다: {auraPath}, {trailPath}, {muzzlePath}");
+                    $"[WeaponAura] 설정을 저장했습니다: {auraPath}, {trailPath}, {muzzlePath}, {meleePath}");
                 ShowHint(L.Action.Saved);
             }
             else
             {
                 UnityEngine.Debug.LogWarning(
                     $"[WeaponAura] 설정 저장에 실패했습니다 " +
-                    $"(오라={auraSaved}, 탄환 잔상={trailSaved}, 총구 화염={muzzleSaved}).");
+                    $"(오라={auraSaved}, 탄환 잔상={trailSaved}, 총구 화염={muzzleSaved}, " +
+                    $"근접 참격={meleeSaved}).");
                 ShowHint(L.Action.SaveFailed);
             }
         }
@@ -575,6 +578,12 @@ namespace WeaponAura.UI
             if (_tab == WindowTab.Muzzle)
             {
                 RandomizeCurrentMuzzle();
+                return;
+            }
+
+            if (_tab == WindowTab.Melee)
+            {
+                RandomizeCurrentMelee();
                 return;
             }
 
@@ -653,6 +662,12 @@ namespace WeaponAura.UI
             if (_tab == WindowTab.Muzzle)
             {
                 ResetMuzzleDefaults();
+                return;
+            }
+
+            if (_tab == WindowTab.Melee)
+            {
+                ResetMeleeDefaults();
                 return;
             }
 

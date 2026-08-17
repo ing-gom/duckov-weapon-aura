@@ -96,6 +96,8 @@ namespace WeaponAura.UI
         private Button? _removeTierButton;
         private readonly List<SliderRow> _rows = new List<SliderRow>();
 
+        private TextMeshProUGUI? _auraTextureLabel;
+
         private ColorPickerControl? _pickerA;
         private ColorPickerControl? _pickerB;
 
@@ -121,6 +123,7 @@ namespace WeaponAura.UI
             Aura = 0,
             Trail = 1,
             Muzzle = 2,
+            Melee = 3,
         }
 
         private WindowTab _tab = WindowTab.Aura;
@@ -128,6 +131,7 @@ namespace WeaponAura.UI
         private GameObject? _auraBody;
         private GameObject? _trailBody;
         private GameObject? _muzzleBody;
+        private GameObject? _meleeBody;
 
         private readonly List<KeyValuePair<WindowTab, Button>> _tabButtons =
             new List<KeyValuePair<WindowTab, Button>>();
@@ -141,6 +145,8 @@ namespace WeaponAura.UI
                 tab = WindowTab.Aura;
             if (tab == WindowTab.Muzzle && _muzzleBody == null)
                 tab = WindowTab.Aura;
+            if (tab == WindowTab.Melee && _meleeBody == null)
+                tab = WindowTab.Aura;
 
             _tab = tab;
 
@@ -150,6 +156,8 @@ namespace WeaponAura.UI
                 _trailBody.SetActive(tab == WindowTab.Trail);
             if (_muzzleBody != null)
                 _muzzleBody.SetActive(tab == WindowTab.Muzzle);
+            if (_meleeBody != null)
+                _meleeBody.SetActive(tab == WindowTab.Melee);
 
             foreach (var pair in _tabButtons)
             {
@@ -171,10 +179,14 @@ namespace WeaponAura.UI
                 _trailPreviewTime = 0f;
                 SyncTrailFromProfile();
             }
-            else
+            else if (tab == WindowTab.Muzzle)
             {
                 _muzzlePreviewTime = 0f;
                 SyncMuzzleFromProfile();
+            }
+            else
+            {
+                SyncMeleeFromProfile();
             }
         }
 
@@ -337,6 +349,7 @@ namespace WeaponAura.UI
 
             DisposeTrailPreview();
             DisposeMuzzlePreview();
+            DisposeMeleePreview();
 
             if (_canvasRoot != null)
                 Destroy(_canvasRoot);
@@ -368,6 +381,12 @@ namespace WeaponAura.UI
             if (_tab == WindowTab.Muzzle)
             {
                 UpdateMuzzleTab();
+                return;
+            }
+
+            if (_tab == WindowTab.Melee)
+            {
+                UpdateMeleeTab();
                 return;
             }
 
