@@ -343,6 +343,10 @@ namespace WeaponAura.Systems
 
             try
             {
+                // 월드 경로와 같은 기준으로 본체에서 떨어진 부품을 뺍니다.
+                // 이 경로에는 크기 필터조차 없어서, 레이저가 여기로 오면 그대로 통과했습니다.
+                Bounds? core = CoreWorldBounds(agent.transform);
+
                 foreach (var renderer in agent.GetComponentsInChildren<Renderer>(true))
                 {
                     if (!IsWeaponBodyRenderer(renderer))
@@ -355,6 +359,18 @@ namespace WeaponAura.Systems
                     Bounds meshBounds = mesh.bounds;
                     Vector3 center = meshBounds.center;
                     Vector3 extents = meshBounds.extents;
+
+                    Vector3 worldSize = Vector3.Scale(meshBounds.size, renderer.transform.lossyScale);
+
+                    if (worldSize.x > MaxWeaponSize || worldSize.y > MaxWeaponSize ||
+                        worldSize.z > MaxWeaponSize)
+                        continue;
+
+                    var partWorld = new Bounds(
+                        renderer.transform.TransformPoint(center), worldSize);
+
+                    if (!IsNearCore(core, partWorld))
+                        continue;
 
                     // 메시 로컬 → 월드 → host 로컬 로 8개 코너를 옮겨서 감싸기
                     for (int i = 0; i < 8; i++)
@@ -403,11 +419,16 @@ namespace WeaponAura.Systems
         /// 무기를 꺼내기 전에는 GameObject가 비활성이라 Renderer.bounds가 0이므로,
         /// 활성 상태와 무관한 sharedMesh.bounds를 기준으로 판단합니다.
         /// </summary>
-        private static Renderer? FindLargestRenderer(DuckovItemAgent agent)
+        internal static Renderer? FindLargestRenderer(DuckovItemAgent agent)
+        {
+            return FindLargestRenderer(agent.transform);
+        }
+
+        internal static Renderer? FindLargestRenderer(Transform root)
         {
             try
             {
-                var renderers = agent.GetComponentsInChildren<Renderer>(true);
+                var renderers = root.GetComponentsInChildren<Renderer>(true);
                 Renderer? best = null;
                 float bestVolume = 0f;
 
@@ -448,6 +469,9 @@ namespace WeaponAura.Systems
                 Bounds result = default;
                 bool initialized = false;
 
+                // 본체에서 멀리 떨어진 부품은 빼기 위한 기준. 없으면(못 찾으면) 거리 판정을 건너뜁니다.
+                Bounds? core = CoreWorldBounds(agent.transform);
+
                 foreach (var renderer in agent.GetComponentsInChildren<Renderer>(false))
                 {
                     if (!IsWeaponBodyRenderer(renderer))
@@ -460,6 +484,13 @@ namespace WeaponAura.Systems
                     // 레이저·트레일처럼 조준 지점까지 뻗는 렌더러가 섞이면 바운즈가 수십 m가 됩니다.
                     // 무기 본체는 이보다 클 수 없으므로 걸러냅니다.
                     if (b.size.x > MaxWeaponSize || b.size.y > MaxWeaponSize || b.size.z > MaxWeaponSize)
+                        continue;
+
+                    // 크기만 봐서는 <b>작은 점이 멀리 있는 경우</b>를 못 잡습니다.
+                    // 레이저 사이트의 조준점이 그렇습니다 — 점 자체는 몇 cm라 위 필터를 그냥
+                    // 통과하는데, 몇 m 앞에 찍히기 때문에 합집합 중심이 그쪽으로 끌려갑니다.
+                    // 그래서 파티클이 총이 아니라 레이저 끝에서 나왔습니다.
+                    if (!IsNearCore(core, b))
                         continue;
 
                     if (!initialized)
@@ -482,10 +513,55 @@ namespace WeaponAura.Systems
         }
 
         /// <summary>
+        /// 본체(가장 큰 렌더러)의 월드 바운즈. 부품이 무기에 붙어 있는지 재는 기준입니다.
+        /// </summary>
+        internal static Bounds? CoreWorldBounds(Transform root)
+        {
+            var core = FindLargestRenderer(root);
+            if (core == null)
+                return null;
+
+            var bounds = core.bounds;
+
+            // 무기를 꺼내기 전에는 비활성이라 renderer.bounds가 0입니다. 그때는
+            // 메시 바운즈를 트랜스폼으로 옮겨서 대신 씁니다.
+            if (bounds.size.sqrMagnitude > 1e-8f)
+                return bounds;
+
+            var mesh = GetSharedMesh(core);
+            if (mesh == null || mesh.vertexCount <= 0)
+                return null;
+
+            var size = Vector3.Scale(mesh.bounds.size, core.transform.lossyScale);
+            if (size.sqrMagnitude <= 1e-8f)
+                return null;
+
+            return new Bounds(core.transform.TransformPoint(mesh.bounds.center), size);
+        }
+
+        /// <summary>
+        /// 이 부품이 무기 본체에 붙어 있다고 볼 만한가.
+        ///
+        /// 본체 바운즈를 자기 크기의 절반만큼 부풀린 뒤 겹치는지만 봅니다. 조준경·손잡이·소음기는
+        /// 총에 닿아 있으니 통과하고, 몇 m 앞 허공에 찍히는 레이저 점은 걸립니다.
+        /// 기준을 절대 거리(m)로 두지 않는 이유는 무기마다 크기가 달라서입니다.
+        /// </summary>
+        internal static bool IsNearCore(Bounds? core, Bounds part)
+        {
+            if (!core.HasValue)
+                return true;
+
+            var expanded = core.Value;
+            expanded.Expand(expanded.size * 0.5f);
+
+            return expanded.Intersects(part);
+        }
+
+        /// <summary>
         /// 무기 "본체" 렌더러인지. 레이저 사이트(LineRenderer)·궤적·파티클·UI 스프라이트는 제외합니다.
         /// 레이저는 월드 바운즈가 조준 지점까지 뻗어서(13~30m) 오라 크기를 통째로 망가뜨립니다.
         /// </summary>
-        private static bool IsWeaponBodyRenderer(Renderer? renderer)
+        internal static bool IsWeaponBodyRenderer(Renderer? renderer)
         {
             if (renderer == null)
                 return false;

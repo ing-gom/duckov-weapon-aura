@@ -84,8 +84,6 @@ namespace WeaponAura.Systems
         private static float? _colorScale;
         private static float _nextStatusTime;
         private static bool _loggedFirstSlash;
-        private static bool _loggedFirstRing;
-        private static bool _loggedFirstTint;
 
         // ── 상태 조회 (설정 창 표시용) ────────────────────────────
         /// <summary>지금 든 근접무기 이름</summary>
@@ -329,7 +327,6 @@ namespace WeaponAura.Systems
                 // 어긋나서 플레이어를 속이게 됩니다.
                 EffectTint.ApplySolid(slash, color, alpha);
 
-                LogFirstTint(slash, color, alpha);
             }
             catch (Exception ex)
             {
@@ -337,36 +334,6 @@ namespace WeaponAura.Systems
                 UnityEngine.Debug.LogWarning($"[WeaponAura] 근접 참격 색 변경 실패: {ex.Message}");
 #endif
             }
-        }
-
-        /// <summary>
-        /// 참격에 실제로 어떤 색을 밀어 넣었는지 한 번 남깁니다.
-        /// 화면이 그대로면 "안 걸렸다"인지 "걸렸는데 흰색에 가깝다"인지 여기서 갈립니다.
-        /// </summary>
-        private static void LogFirstTint(GameObject slash, Color color, float alpha)
-        {
-            if (_loggedFirstTint)
-                return;
-
-            _loggedFirstTint = true;
-
-            var detail = new System.Text.StringBuilder();
-            foreach (var renderer in slash.GetComponentsInChildren<Renderer>(true))
-            {
-                if (renderer == null || renderer.sharedMaterial == null)
-                    continue;
-
-                var block = new MaterialPropertyBlock();
-                renderer.GetPropertyBlock(block);
-
-                detail.Append($" | '{renderer.gameObject.name}' 적용후_BaseColor=" +
-                              (renderer.sharedMaterial.HasProperty("_BaseColor")
-                                  ? block.GetColor("_BaseColor").ToString()
-                                  : "없음"));
-            }
-
-            UnityEngine.Debug.Log(
-                $"[WeaponAura] 근접 참격 색 적용: 색={color.ToString()} 알파={alpha:0.###}" + detail);
         }
 
         /// <summary>
@@ -553,8 +520,6 @@ namespace WeaponAura.Systems
             float halfArc = Mathf.Clamp(profile.sparkArc * 0.5f, 0f, 180f) * Mathf.Deg2Rad;
             float facing = profile.slashFacing * Mathf.Deg2Rad;
 
-            LogFirstRing(handle, center, bestSize, toWorld, ring);
-
             for (int i = 0; i < emit; i++)
             {
                 float angle = facing + UnityEngine.Random.Range(-halfArc, halfArc);
@@ -653,28 +618,6 @@ namespace WeaponAura.Systems
             {
                 return false;
             }
-        }
-
-        /// <summary>
-        /// 첫 흩뿌림에서 실제로 어느 자리에 얼마만 한 고리로 얹었는지 한 번 남깁니다.
-        /// 크기가 터무니없으면(예전 바운즈 폴백의 40m처럼) 이 줄에서 바로 드러납니다.
-        /// </summary>
-        private static void LogFirstRing(BurstHandle handle, Vector3 center, float rawSize,
-            Matrix4x4 toWorld, float ring)
-        {
-            if (_loggedFirstRing)
-                return;
-
-            _loggedFirstRing = true;
-
-            // 쿼드 테두리까지의 실제 월드 거리. 이 값이 참격 크기와 안 맞으면 바로 드러납니다.
-            float edge = toWorld.MultiplyVector(new Vector3(0.5f * ring, 0f, 0f)).magnitude;
-            var normal = toWorld.MultiplyVector(Vector3.forward).normalized;
-
-            UnityEngine.Debug.Log(
-                $"[WeaponAura] 근접 흩뿌림 자리: 중심={center.ToString("0.##")} " +
-                $"알갱이크기={rawSize:0.###} 호반지름={edge:0.###}m " +
-                $"판법선={normal.ToString("0.##")} 초당={handle.Rate:0.#}개");
         }
 
         public static void Clear()

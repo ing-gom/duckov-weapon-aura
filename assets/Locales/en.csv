@@ -242,3 +242,5 @@ melee_field_alpha,Scatter opacity
 melee_field_intensity,Scatter brightness
 section_texture,Shape texture
 section_texture_default,Default (none)
+field_world_trail_on,Leave a trail behind
+field_world_trail_off,Follow the weapon

@@ -87,6 +87,18 @@ namespace WeaponAura.Systems
         /// <summary>중력 배율 (음수면 위로 떠오름)</summary>
         public float gravity = -0.02f;
 
+        /// <summary>
+        /// 뿌려진 알갱이를 무기에 매지 않고 <b>월드에 남길지</b>.
+        ///
+        /// 끄면 알갱이가 무기 좌표계에서 살기 때문에, 움직이면 이미 뿌려진 것까지 통째로
+        /// 따라옵니다. 무기를 감싼 오라만 원할 때 그렇게 씁니다.
+        ///
+        /// 켜면(기본) 알갱이가 생긴 자리에 그대로 박혀서, 지나간 궤적에 문양이 깔립니다.
+        /// 다만 화면에 남는 개수가 <b>이동 속도에 비례</b>합니다 — 달리면 길게 깔리므로
+        /// 수명과 방출량을 같이 낮춰 잡아야 지저분해지지 않습니다.
+        /// </summary>
+        public bool worldTrail = true;
+
         // ── 노이즈 (오로라 흔들림) ────────────────────────────
         public float noiseStrength = 0.2f;
         public float noiseFrequency = 0.4f;
@@ -157,7 +169,7 @@ namespace WeaponAura.Systems
         public float sizeEnd = 0.2f;
 
         // ── 트레일 (꼬리) ────────────────────────────────────
-        public bool trailEnabled = false;
+        public bool trailEnabled = true;
         /// <summary>트레일이 붙는 파티클 비율 (0~1)</summary>
         public float trailRatio = 0.5f;
         /// <summary>파티클 크기 대비 트레일 폭</summary>

@@ -270,9 +270,12 @@ namespace WeaponAura.UI
             var label = MakeText("Label", row, L.Preview.Zoom, 18, TextColor, TextAlignmentOptions.MidlineLeft);
             SetWidth(label.rectTransform, 56f);
 
-            var slider = MakeSlider(row, 0.4f, 2.2f);
+            var slider = MakeSlider(row, WeaponAuraPreviewStage.MinZoom, 2.2f);
             slider.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
-            slider.SetValueWithoutNotify(1f);
+
+            // 최소치에서 시작합니다. 당겨 놓으면 무기가 화면을 채워서, 게임(탑다운·원거리)에서
+            // 보게 될 크기·밝기와 전혀 다르게 읽힙니다.
+            slider.SetValueWithoutNotify(WeaponAuraPreviewStage.MinZoom);
             slider.onValueChanged.AddListener(value =>
             {
                 if (_preview != null)
@@ -511,10 +514,15 @@ namespace WeaponAura.UI
             BuildShapeEditor(parent);
 
             AddSectionLabel(parent, L.Section.Particles);
+            BuildWorldTrailRow(parent);
             BuildTrailRow(parent);
-            AddSlider(parent, L.Field.EmissionRate, 0f, 80f, "0",
+            AddSlider(parent, L.Field.EmissionRate, 0f, 20f, "0",
                 p => p.emissionRate, (p, v) => p.emissionRate = v);
-            AddSlider(parent, L.Field.ParticleSize, 0.005f, 0.12f, "0.000",
+            // 상한이 0.12m였습니다. 무기 실측 길이가 2m 안팎이라 그 6%밖에 안 되고,
+            // 끝까지 올려도 알갱이가 여전히 자잘합니다(총구 화염에서도 같은 이유로
+            // 상한을 열었습니다). 컨트롤러 쪽에는 하한만 있고 상한이 없어서 슬라이더만
+            // 넓히면 됩니다.
+            AddSlider(parent, L.Field.ParticleSize, 0.005f, 1f, "0.000",
                 p => p.startSize, (p, v) => p.startSize = v);
             AddSlider(parent, L.Field.ParticleLifetime, 0.2f, 3f, "0.00",
                 p => p.lifetime, (p, v) => p.lifetime = v);
@@ -654,6 +662,25 @@ namespace WeaponAura.UI
                 string label = preset.Label;
                 MakeButton(grid, label, 0f, () => ApplyPreset(kind, label), ButtonColor);
             }
+        }
+
+        /// <summary>
+        /// 알갱이를 지나간 자리에 남길지.
+        ///
+        /// 끄면 알갱이가 무기 좌표계에서 살아서 움직일 때 통째로 따라옵니다(기본).
+        /// 켜면 생긴 자리에 박혀서 궤적에 문양이 깔립니다.
+        /// </summary>
+        private void BuildWorldTrailRow(Transform parent)
+        {
+            var row = MakeRect("WorldTrailRow", parent);
+            SetHeight(row, 40f);
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+
+            _worldTrailButton = MakeButton(row, "", 0f, ToggleWorldTrail, ButtonColor);
         }
 
         /// <summary>

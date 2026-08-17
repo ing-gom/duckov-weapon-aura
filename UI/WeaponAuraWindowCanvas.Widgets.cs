@@ -317,6 +317,24 @@ namespace WeaponAura.UI
             WeaponAuraSystem.RebuildNow();
         }
 
+        /// <summary>
+        /// 알갱이를 지나간 자리에 남길지 뒤집습니다.
+        ///
+        /// 시뮬레이션 공간이 바뀌는 것이라 이미 살아 있는 알갱이는 좌표 해석이 달라집니다.
+        /// 컨트롤러가 바뀔 때만 한 번 지우므로 여기서는 값만 반영하면 됩니다.
+        /// </summary>
+        private void ToggleWorldTrail()
+        {
+            var profile = CurrentProfile();
+            if (profile == null)
+                return;
+
+            profile.worldTrail = !profile.worldTrail;
+
+            RefreshDisplayRow();
+            ApplyEdit(false);
+        }
+
         private void ToggleTrail()
         {
             var profile = CurrentProfile();
@@ -354,6 +372,18 @@ namespace WeaponAura.UI
 
                 button.targetGraphic.color =
                     AuraSettings.AuraMode == pair.Key ? ButtonAccentColor : ButtonColor;
+            }
+
+            if (_worldTrailButton != null)
+            {
+                bool world = profile != null && profile.worldTrail;
+
+                var label = _worldTrailButton.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (label != null)
+                    label.text = world ? L.Field.WorldTrailOff : L.Field.WorldTrailOn;
+
+                if (_worldTrailButton.targetGraphic != null)
+                    _worldTrailButton.targetGraphic.color = world ? ButtonAccentColor : ButtonColor;
             }
 
             if (_trailButton != null)

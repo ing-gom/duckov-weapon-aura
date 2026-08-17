@@ -103,6 +103,7 @@ namespace WeaponAura.UI
 
         private Button? _toggleButton;
         private Button? _trailButton;
+        private Button? _worldTrailButton;
 
         private readonly List<KeyValuePair<WeaponAuraMode, Button>> _strengthButtons =
             new List<KeyValuePair<WeaponAuraMode, Button>>();

@@ -242,3 +242,5 @@ melee_field_alpha,흩뿌림 투명도
 melee_field_intensity,흩뿌림 밝기
 section_texture,모양 그림
 section_texture_default,기본 (그림 없음)
+field_world_trail_on,지나간 자리에 남기기
+field_world_trail_off,무기를 따라오게

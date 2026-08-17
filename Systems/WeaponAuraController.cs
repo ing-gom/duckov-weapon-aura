@@ -71,6 +71,18 @@ namespace WeaponAura.Systems
         public bool UseUnscaledTime { get; set; }
 
         /// <summary>
+        /// 알갱이를 무조건 무기 좌표계에서 돌립니다 (프로필의 "지나간 자리에 남기기"를 무시).
+        ///
+        /// 설정 창 미리보기 전용입니다. 미리보기 무대는 모델을 제자리에서 빙글빙글 돌리는데,
+        /// 월드 공간이면 알갱이가 그 회전을 따라 고리 모양으로 번집니다. 실제 게임에서
+        /// 보게 될 "지나간 자리에 남는 궤적"과 전혀 다른 그림이라 오해만 부릅니다.
+        /// </summary>
+        public bool ForceLocalParticles { get; set; }
+
+        /// <summary>이 오라가 어디에 세워진 것인지 (진단 로그 구분용).</summary>
+        public string Origin { get; set; } = "게임";
+
+        /// <summary>
         /// 오라를 생성합니다. root(this.gameObject)는 이미 무기 트랜스폼 아래에 부모 설정되어 있어야 합니다.
         /// </summary>
         /// <param name="holder">무기를 들고 있는 캐릭터 (CharacterSubVisuals 등록용, null 허용)</param>
@@ -108,6 +120,9 @@ namespace WeaponAura.Systems
                     CreateSheets(meshRenderer);
 
                 ApplyLive(_profile, _intensity);
+#if DEBUG
+                LogScale();
+#endif
                 return true;
             }
             catch (Exception ex)
@@ -143,6 +158,38 @@ namespace WeaponAura.Systems
                 UnityEngine.Debug.LogWarning($"[WeaponAura] WeaponAuraController.ApplyLive 오류: {ex.Message}");
             }
         }
+
+#if DEBUG
+        /// <summary>
+        /// 알갱이 크기가 실제로 몇 미터로 해석되는지 한 번 남깁니다.
+        ///
+        /// 미리보기와 인게임이 다르게 보인다면 둘 중 하나입니다 — 알갱이 자체가 다른 크기이거나,
+        /// 뿜는 영역이 달라서 뭉치는 정도가 다르거나. 두 줄을 나란히 놓고 비교하면 갈립니다.
+        /// startSize는 계층 스케일이 곱해지므로 루트의 lossyScale이 1이어야 미터로 읽힙니다.
+        /// </summary>
+        private void LogScale()
+        {
+            if (_wrap == null || _profile == null)
+                return;
+
+            var shape = _wrap.shape;
+            var lossy = transform.lossyScale;
+
+            UnityEngine.Debug.Log(
+                $"[WeaponAura] 알갱이 실측({Origin}): 설정크기={_profile.startSize:0.####} " +
+                $"실제크기={_wrap.main.startSize.constantMax:0.####} " +
+                $"루트스케일={lossy.ToString("0.###")} 스케일모드={_wrap.main.scalingMode} " +
+                $"| 방출={shape.shapeType} 셰이프스케일={shape.scale.ToString("0.###")} " +
+                $"위치={shape.position.ToString("0.###")} " +
+                $"| 무기바운즈={_boundsSize.ToString("0.###")} 호스트스케일={_hostScale.ToString("0.###")} " +
+                $"메시Shape={MeshShapeActive} " +
+                // 흰색으로 포화되는지는 "몇 개가 얼마나 진하게 겹치는가"로 갈립니다.
+                $"| 세기={_intensity:0.##} 방출={_wrap.emission.rateOverTime.constantMax:0.#}/s " +
+                $"최대개수={_wrap.main.maxParticles} 수명={_profile.lifetime:0.##}s " +
+                $"알파={_profile.alpha:0.##} 밝기={_profile.colorIntensity:0.##} " +
+                $"| 방식={_profile.renderStyle} 겹={_sheets.Count} 월드잔상={_profile.worldTrail}");
+        }
+#endif
 
         /// <summary>퍼져나가는 면(셸)을 겹 수만큼 만듭니다.</summary>
         private void CreateSheets(Renderer? weaponRenderer)
@@ -570,6 +617,7 @@ namespace WeaponAura.Systems
             if (_profile == null)
                 return;
 
+
             if (_sheets.Count > 0)
             {
                 float t = UseUnscaledTime ? Time.unscaledTime : Time.time;
@@ -608,7 +656,11 @@ namespace WeaponAura.Systems
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
             var main = ps.main;
-            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+
+            // 기본은 로컬 — 무기를 감싼 오라라서 무기와 함께 움직여야 합니다.
+            // "지나간 자리에 남기기"를 켜면 월드로 바뀝니다(ApplyToWrap이 갱신).
+            main.simulationSpace = WantedSimulationSpace();
+
             // 루트에서 호스트 스케일을 상쇄했으므로, 파티클 크기도 계층 스케일(=월드 1)을 따르게 해야
             // startSize가 실제 미터로 해석됩니다. Local(기본값)이면 보정된 로컬 스케일이 그대로 곱해집니다.
             main.scalingMode = ParticleSystemScalingMode.Hierarchy;
@@ -813,6 +865,14 @@ namespace WeaponAura.Systems
         // 수치 적용
         // ──────────────────────────────────────────────────────────
 
+        /// <summary>알갱이를 무기에 맬지(Local), 생긴 자리에 남길지(World).</summary>
+        private ParticleSystemSimulationSpace WantedSimulationSpace()
+        {
+            return !ForceLocalParticles && _profile != null && _profile.worldTrail
+                ? ParticleSystemSimulationSpace.World
+                : ParticleSystemSimulationSpace.Local;
+        }
+
         private void ApplyToWrap()
         {
             if (_wrap == null || _profile == null)
@@ -823,6 +883,19 @@ namespace WeaponAura.Systems
             float lifetime = Mathf.Max(0.05f, _profile.lifetime);
 
             var main = _wrap.main;
+
+            // 알갱이를 무기에 맬지, 생긴 자리에 남길지.
+            //
+            // 바꾸는 순간 이미 살아 있는 알갱이는 좌표가 다르게 해석되어 순간이동합니다.
+            // 슬라이더를 만지는 중에 그게 보이면 버그로 읽히므로, 바뀔 때만 한 번 지웁니다.
+            var wanted = WantedSimulationSpace();
+
+            if (main.simulationSpace != wanted)
+            {
+                main.simulationSpace = wanted;
+                _wrap.Clear();
+            }
+
             main.startLifetime = lifetime;
             main.startSpeed = _profile.speed;
             main.startSize = Mathf.Max(0.001f, _profile.startSize);

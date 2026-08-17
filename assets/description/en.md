@@ -10,6 +10,7 @@ An aura **spreads outward from your weapon's surface.** It's not a cloud of part
 - **Live 3D preview** — shows the weapon you are actually holding. Pick a grade and its color appears instantly; drag to spin it, or zoom in.
 - **12 elemental templates** — Aurora / Fire / Frost / Toxic / Void / Shock / Holy / Blood / Arcane / Plasma / Nature / Shadow. One click swaps the whole look and motion.
 - **Shell, waves, particles** — layer count, spread distance, concentric waves, surface particle rate/size/life, and trailing tails.
+- **Leave a trail behind** — particles stay where they were born instead of following the weapon, so moving lays a pattern along your path. Turn it off to keep the aura hugging the weapon.
 - **Global strength** — subtle / normal / intense.
 
 ## Bullet Trails — by ammo grade

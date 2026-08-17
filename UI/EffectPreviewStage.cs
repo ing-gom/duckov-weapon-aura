@@ -184,7 +184,12 @@ namespace WeaponAura.UI
 
             if (_texture == null)
             {
-                _texture = new RenderTexture(TextureWidth, TextureHeight, 24, RenderTextureFormat.ARGB32)
+                // 게임이 HDR로 그리면 미리보기도 HDR이어야 블룸이 같게 걸립니다.
+                var format = PreviewCameraSetup.GameUsesHdr()
+                    ? RenderTextureFormat.DefaultHDR
+                    : RenderTextureFormat.ARGB32;
+
+                _texture = new RenderTexture(TextureWidth, TextureHeight, 24, format)
                 {
                     name = $"WeaponAura_{StageName}PreviewRT",
                     antiAliasing = 2,
@@ -235,6 +240,9 @@ namespace WeaponAura.UI
             }
 
             _camera.cullingMask = 1 << Layer;
+
+            // 게임 화면의 후처리를 그대로 받게 맞춥니다(오라 미리보기와 같은 이유).
+            PreviewCameraSetup.Match(_camera, StageName, Layer);
         }
 
         /// <summary>

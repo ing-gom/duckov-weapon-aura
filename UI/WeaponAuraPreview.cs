@@ -121,6 +121,10 @@ namespace WeaponAura.UI
                 int characterLayer = LayerMask.NameToLayer("Character");
                 _camera.cullingMask = characterLayer >= 0 ? 1 << characterLayer : ~0;
             }
+
+            // 게임 화면의 후처리(블룸 등)를 그대로 받게 맞춥니다.
+            // 맨 카메라로 두면 같은 오라가 게임보다 어둡고 작게 보입니다.
+            PreviewCameraSetup.Match(_camera, "진단", _camera.gameObject.layer);
         }
 
         /// <summary>현재 들고 있는 무기의 위치·크기를 구합니다.</summary>

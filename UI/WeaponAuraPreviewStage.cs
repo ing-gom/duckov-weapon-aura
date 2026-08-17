@@ -22,7 +22,15 @@ namespace WeaponAura.UI
     /// </summary>
     public class WeaponAuraPreviewStage
     {
-        private const int TextureSize = 384;
+        /// <summary>
+        /// 미리보기 렌더 해상도.
+        ///
+        /// 패널의 표시 영역은 1920 기준 388px인데, 캔버스 스케일러가 화면 크기에 맞춰
+        /// 늘리기 때문에 2560 화면에서는 500px, 4K에서는 700px 넘게 그려집니다.
+        /// 384로 찍어서 늘리면 그 배율만큼 뭉개집니다. 넉넉히 잡아 둡니다 —
+        /// 한 장짜리 작은 씬이라 해상도를 올려도 비용이 거의 없습니다.
+        /// </summary>
+        private const int TextureSize = 1024;
 
         /// <summary>복제할 때 같이 딸려오는 진짜 오라 오브젝트 접두사</summary>
         private const string AuraNamePrefix = "WeaponAura_";
@@ -44,8 +52,17 @@ namespace WeaponAura.UI
 
         public float Yaw { get; private set; } = 35f;
         public float Pitch { get; private set; } = 14f;
-        /// <summary>1보다 작으면 더 멀리서 봅니다. 창의 "확대" 슬라이더가 조절합니다.</summary>
-        public float Zoom { get; set; } = 1f;
+        /// <summary>
+        /// 1보다 작으면 더 멀리서 봅니다. 창의 "확대" 슬라이더가 조절합니다.
+        ///
+        /// 기본을 최소치로 둡니다. 가까이 당길수록 무기가 화면을 채우는데, 게임은 탑다운이라
+        /// 훨씬 멀리서 보기 때문에 당겨 놓으면 같은 오라가 전혀 다른 크기·밝기로 읽힙니다.
+        /// 멀리서 보는 쪽이 실제와 가깝습니다.
+        /// </summary>
+        public float Zoom { get; set; } = MinZoom;
+
+        /// <summary>창의 확대 슬라이더 하한과 같은 값이어야 합니다.</summary>
+        internal const float MinZoom = 0.4f;
         public bool AutoRotate { get; set; } = true;
 
         /// <summary>무대를 세우지 못한 이유 (상태 표시용)</summary>
@@ -59,7 +76,7 @@ namespace WeaponAura.UI
 
         public void AdjustZoom(float delta)
         {
-            Zoom = Mathf.Clamp(Zoom * (1f + delta), 0.5f, 2.5f);
+            Zoom = Mathf.Clamp(Zoom * (1f + delta), MinZoom, 2.5f);
         }
 
         /// <summary>
@@ -87,7 +104,7 @@ namespace WeaponAura.UI
                 EnsureLayer();
                 EnsureResources();
 
-                if (!EnsureStage(profile))
+                if (!EnsureStage(profile, intensity))
                     return null;
 
                 if (_camera == null || _texture == null || _pivot == null)
@@ -170,7 +187,13 @@ namespace WeaponAura.UI
         {
             if (_texture == null)
             {
-                _texture = new RenderTexture(TextureSize, TextureSize, 24, RenderTextureFormat.ARGB32)
+                // 게임이 HDR로 그리면 미리보기도 HDR이어야 합니다. LDR 타깃에 담으면
+                // 가산 합성으로 1을 넘긴 밝기가 먼저 잘려서 블룸이 걸릴 거리가 없어집니다.
+                var format = PreviewCameraSetup.GameUsesHdr()
+                    ? RenderTextureFormat.DefaultHDR
+                    : RenderTextureFormat.ARGB32;
+
+                _texture = new RenderTexture(TextureSize, TextureSize, 24, format)
                 {
                     name = "WeaponAura_PreviewRT",
                     antiAliasing = 2,
@@ -200,6 +223,10 @@ namespace WeaponAura.UI
             {
                 _camera.cullingMask = 1 << _layer;
             }
+
+            // 게임 화면의 후처리(블룸 등)를 그대로 받게 맞춥니다.
+            // 이걸 안 하면 미리보기만 맨 카메라라, 같은 이펙트가 덜 밝고 작게 보입니다.
+            PreviewCameraSetup.Match(_camera, "오라", _layer);
         }
 
         private void PlaceCamera()
@@ -224,7 +251,7 @@ namespace WeaponAura.UI
 
         // ── 무대 ────────────────────────────────────────────────────
 
-        private bool EnsureStage(WeaponAuraProfile profile)
+        private bool EnsureStage(WeaponAuraProfile profile, float intensity)
         {
             var player = CharacterMainControl.Main;
             var holder = player != null ? player.agentHolder : null;
@@ -241,10 +268,11 @@ namespace WeaponAura.UI
                 return true;
 
             DestroyStage();
-            return BuildStage(player!, agent, profile);
+            return BuildStage(player!, agent, profile, intensity);
         }
 
-        private bool BuildStage(CharacterMainControl player, Component agent, WeaponAuraProfile profile)
+        private bool BuildStage(CharacterMainControl player, Component agent, WeaponAuraProfile profile,
+            float intensity)
         {
             var model = FindModelRoot(player, agent);
             if (model == null)
@@ -290,6 +318,7 @@ namespace WeaponAura.UI
 
             // 모델 기준으로 다시 가운데를 맞춥니다 (발밑이 아니라 무기 근처가 중심이 되도록)
             var weaponRenderers = ResolveRenderers(clone.transform, sourcePaths);
+
             _bounds = MeasureBounds(root.transform, weaponRenderers, clone.transform);
 
             if (weaponRenderers.Count == 0)
@@ -299,7 +328,7 @@ namespace WeaponAura.UI
                 return true;
             }
 
-            BuildAura(weaponRenderers, profile);
+            BuildAura(weaponRenderers, profile, intensity);
             Status = "-";
             return true;
         }
@@ -398,7 +427,7 @@ namespace WeaponAura.UI
         /// - 복제본에는 ItemAgent가 없으므로 실루엣 원본을 직접 지정합니다
         /// - 설정 창은 게임이 멈춘 상태에서 열리므로 unscaled 시간으로 돌립니다
         /// </summary>
-        private void BuildAura(List<Renderer> weaponRenderers, WeaponAuraProfile profile)
+        private void BuildAura(List<Renderer> weaponRenderers, WeaponAuraProfile profile, float intensity)
         {
             var host = weaponRenderers[0].transform;
 
@@ -418,14 +447,30 @@ namespace WeaponAura.UI
 
             Bounds localBounds = LocalBoundsOf(weaponRenderers, rootObject.transform);
 
+            // 방출 영역은 <b>게임이 방금 잰 값</b>을 그대로 씁니다.
+            //
+            // 미리보기가 스스로 재면 대상이 달라집니다 — 복제본에는 ItemAgent가 없어서
+            // 실루엣 부품 하나만 잡히고, 게임은 부착물까지 포함한 무기 전체를 잡습니다.
+            // 실제로 Z축이 0.037 대 0.331로 9배까지 벌어졌고, 그만큼 인게임 알갱이가
+            // 더 넓게 퍼져 보였습니다. 같은 규칙을 두 번 구현하는 대신 결과를 넘겨받습니다.
+            var measured = WeaponAuraSystem.WeaponBoundsSize;
+            if (measured.sqrMagnitude > 0.000001f)
+                localBounds = new Bounds(localBounds.center, measured);
+
             var controller = rootObject.AddComponent<WeaponAuraController>();
             controller.SilhouetteOverride = weaponRenderers;
             controller.UseUnscaledTime = true;
 
+            // 무대는 모델을 제자리에서 돌립니다. "지나간 자리에 남기기"를 그대로 두면
+            // 알갱이가 그 회전을 따라 고리로 번져서, 실제 게임에서 보게 될 궤적과
+            // 전혀 다른 그림이 됩니다.
+            controller.ForceLocalParticles = true;
+            controller.Origin = "미리보기";
+
             // holder는 null — CharacterSubVisuals에 등록하면 안 됩니다.
             // 미리보기는 캐릭터 은폐 상태를 따라갈 이유가 없고, 본편 캐릭터를 건드리게 됩니다.
             bool built = controller.Build(null, weaponRenderers[0], localBounds.center,
-                localBounds.size, hostScale, profile, 1f);
+                localBounds.size, hostScale, profile, intensity);
 
             if (!built)
             {

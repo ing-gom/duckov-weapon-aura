@@ -333,6 +333,9 @@ public static class LK
         public const string EmissionRate = "field_emission_rate";
         public const string ParticleSize = "field_particle_size";
         public const string ParticleLifetime = "field_particle_lifetime";
+        public const string WorldTrailOn = "field_world_trail_on";
+        public const string WorldTrailOff = "field_world_trail_off";
+
         public const string TrailOn = "field_trail_on";
         public const string TrailOff = "field_trail_off";
         public const string TrailLength = "field_trail_length";

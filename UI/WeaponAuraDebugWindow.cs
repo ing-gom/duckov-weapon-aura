@@ -494,7 +494,9 @@ namespace WeaponAura.UI
 
             Section("무기 표면 파티클");
             p.emissionRate = Slider("방출량/초", p.emissionRate, 0f, 100f, "0.#");
-            p.startSize = Slider("입자 크기", p.startSize, 0.005f, 0.2f, "0.###");
+            // 설정 창과 같은 범위로 맞춥니다. 두 UI가 다르면 한쪽에서 맞춘 값이
+            // 다른 쪽 슬라이더에서 잘려 보입니다.
+            p.startSize = Slider("입자 크기", p.startSize, 0.005f, 1.5f, "0.###");
             p.lifetime = Slider("수명(초)", p.lifetime, 0.1f, 3f);
             p.speed = Slider("확산 속도", p.speed, 0f, 1f);
             p.drag = Slider("감속(번짐 유지)", p.drag, 0f, 1f);

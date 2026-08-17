@@ -242,3 +242,5 @@ melee_field_alpha,飛濺不透明度
 melee_field_intensity,飛濺亮度
 section_texture,圖案貼圖
 section_texture_default,預設（無圖案）
+field_world_trail_on,留在經過的位置
+field_world_trail_off,跟隨武器移動
