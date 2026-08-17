@@ -76,3 +76,111 @@ preset_plasma,플라즈마
 preset_nature,자연
 preset_shadow,그림자
 preset_applied,등급 {0}에 "{1}" 템플릿을 적용했습니다.
+window_title_trail,탄환 잔상 — 등급 {0} {1}
+tab_aura,무기 오라
+tab_trail,탄환 잔상
+trail_section_grade,탄환 등급 선택
+trail_follow_ammo,장착 탄환 등급 따라가기
+trail_follow_state,탄환 따라감
+trail_manual_state,직접 선택
+trail_applies_to_loaded,→ 지금 장착한 탄환에 바로 반영됩니다
+trail_preview_only,→ 지금은 미리보기에만 반영됩니다
+trail_status_ammo,탄환: {0}
+trail_status_grade,탄환 등급 {0}
+trail_status_no_ammo,탄환 없음 (총을 들고 장전하면 표시됩니다)
+trail_status_editing,편집 중: 등급 {0} ({1})
+trail_on,탄환 잔상 켜기
+trail_off,탄환 잔상 끄기
+trail_off_notice,탄환 잔상이 꺼져 있습니다
+trail_scope,적용 대상
+trail_scope_player,내 총알
+trail_scope_everyone,모든 총알
+trail_grade_on,이 등급 잔상 켜기
+trail_grade_off,이 등급 잔상 끄기
+trail_grade_disabled_notice,이 등급 탄환에는 잔상이 그려지지 않습니다
+trail_section_color_head,머리 색 (총알 쪽)
+trail_section_color_tail,꼬리 색 (사라지는 쪽)
+trail_section_shape,모양
+trail_field_length,잔상 길이
+trail_field_start_width,머리 굵기
+trail_field_end_width,꼬리 굵기
+trail_field_alpha,투명도
+trail_field_intensity,밝기
+trail_glow_on,발광 켜기
+trail_glow_off,발광 끄기
+trail_random_applied,등급 {0} 잔상에 랜덤 조합을 적용했습니다 (시드 {1}).
+trail_reset_done,탄환 잔상을 기본값으로 되돌렸습니다
+window_title_muzzle,총구 화염 — 등급 {0} {1}
+tab_muzzle,총구 화염
+muzzle_section_grade,탄환 등급 선택
+muzzle_follow_ammo,장착 탄환 등급 따라가기
+muzzle_follow_state,탄환 따라감
+muzzle_manual_state,직접 선택
+muzzle_applies_to_loaded,→ 지금 장착한 탄환에 바로 반영됩니다
+muzzle_preview_only,→ 지금은 미리보기에만 반영됩니다
+muzzle_status_editing,편집 중: 등급 {0} ({1})
+muzzle_on,총구 화염 켜기
+muzzle_off,총구 화염 끄기
+muzzle_off_notice,총구 화염이 꺼져 있습니다
+muzzle_scope,적용 대상
+muzzle_scope_player,내 총
+muzzle_scope_everyone,모든 총
+muzzle_grade_on,이 등급 화염 켜기
+muzzle_grade_off,이 등급 화염 끄기
+muzzle_grade_disabled_notice,이 등급 탄환에는 화염이 그려지지 않습니다
+muzzle_section_color_inner,중심 색
+muzzle_section_color_outer,바깥 색 (등급이 읽히는 곳)
+muzzle_section_shape,모양
+muzzle_section_sparks,불꽃
+muzzle_field_size,크기
+muzzle_field_duration,지속 시간
+muzzle_field_alpha,투명도
+muzzle_field_intensity,밝기
+muzzle_field_spark_count,불꽃 개수
+muzzle_field_spark_size,불꽃 크기
+muzzle_preview_note,실제 이펙트를 그대로 찍어 반복 재생합니다
+muzzle_random_applied,등급 {0} 화염에 랜덤 조합을 적용했습니다 (시드 {1}).
+muzzle_reset_done,총구 화염을 기본값으로 되돌렸습니다
+muzzle_mode,방식
+muzzle_mode_tint,색만 바꾸기
+muzzle_mode_replace,통째로 대체
+muzzle_field_size_scale,크기 배율
+muzzle_section_look,모양과 프리셋
+muzzle_shape_prev,◀
+muzzle_shape_next,▶
+muzzle_shape_rescan,↻
+muzzle_shape_glow,빛무리
+muzzle_shape_heart,하트
+muzzle_shape_star,별
+muzzle_shape_diamond,다이아
+muzzle_shape_ring,고리
+muzzle_shape_sparkle,반짝임
+muzzle_preset_flash,기본 화염
+muzzle_preset_hearts,하트 뿅뿅
+muzzle_preset_stardust,별가루
+muzzle_preset_applied,등급 {0}에 "{1}" 프리셋을 적용했습니다.
+muzzle_field_spark_spread,퍼짐 각도
+muzzle_field_spark_spin,회전 속도
+muzzle_stretch_on,진행 방향으로 늘이기
+muzzle_stretch_off,늘이지 않기
+muzzle_mode_overlay,함께 표시
+muzzle_field_spark_distance,날아가는 거리
+muzzle_field_spark_rise,떠오르는 높이
+muzzle_preview_need_shot,한 발 쏘면 그 총의 실제 화염이 여기 나옵니다
+muzzle_section_draw,도형 직접 그리기
+muzzle_shape_name,이름
+muzzle_shape_save,저장하고 쓰기
+muzzle_shape_random,무작위 생성
+muzzle_shape_clear,판 비우기
+muzzle_shape_load,이 등급 도형 불러오기
+muzzle_shape_delete,이 이름 도형 삭제
+muzzle_shape_hint,칸을 끌어서 칠합니다. 칠해진 칸에서 시작하면 지웁니다.
+muzzle_shape_saved,"{0}" 도형을 저장하고 이 등급에 적용했습니다.
+muzzle_shape_loaded,"{0}" 도형을 판으로 불러왔습니다.
+muzzle_shape_deleted,"{0}" 도형을 지웠습니다.
+muzzle_shape_randomised,도형을 무작위로 만들었습니다 (시드 {0}).
+muzzle_shape_need_name,이름을 먼저 적어 주세요.
+muzzle_shape_empty,판이 비어 있습니다. 칸을 칠한 뒤 저장하세요.
+muzzle_shape_full,도형은 {0}개까지 저장할 수 있습니다.
+muzzle_shape_save_failed,도형을 저장하지 못했습니다.
+muzzle_shape_not_drawn,직접 그린 도형이 아닙니다.

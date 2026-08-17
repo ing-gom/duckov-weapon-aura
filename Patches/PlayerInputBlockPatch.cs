@@ -21,6 +21,14 @@ namespace WeaponAura.Patches
         private static bool _patchesApplied;
 
         /// <summary>
+        /// 정지·입력 차단 패치가 걸려 있는지.
+        ///
+        /// 이게 false면 설정 창을 열어도 게임이 멈추지 않습니다 — 창은 떠 있고 커서도 보이는데
+        /// 뒤에서 게임이 계속 돌아가는, 원인을 찾기 어려운 상태가 됩니다. 창을 열 때 확인합니다.
+        /// </summary>
+        public static bool IsApplied => _patchesApplied;
+
+        /// <summary>
         /// 지금 플레이어 입력을 막아야 하는지 여부.
         /// 모드 창이 늘어나면 여기에 조건을 추가하면 됩니다.
         /// </summary>

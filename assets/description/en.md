@@ -1,26 +1,50 @@
 # Weapon Aura
 
+Three grade-driven effects: an **aura spreading off your weapon's surface**, a **tracer trail behind every bullet**, and a **muzzle flash at the barrel**. All three are edited in an in-game window, and anything you don't want can be switched off.
+
+## Weapon Aura — by weapon grade
+
 An aura **spreads outward from your weapon's surface.** It's not a cloud of particles — it's a shell that follows the weapon's shape, so guns and melee weapons alike get wrapped in their own silhouette.
 
-## Features
-
-- **Grade-based auras** — seven tiers ship by default, one per item grade 1–7. Special and crafted grades such as 9 or 999 can be added yourself and styled separately.
-- **In-game settings window** — opens from the `Aura Settings` button in the pause menu, built with the game's own font and colors.
+- **Seven grades** — one per item grade 1–7. Special and crafted grades such as 9 or 999 can be added yourself and styled separately.
 - **Live 3D preview** — shows the weapon you are actually holding. Pick a grade and its color appears instantly; drag to spin it, or zoom in.
-- **Color picker** — grab a color from the saturation/value square and hue bar, or type an exact value as HEX (`#FF8800`) or R/G/B.
 - **12 elemental templates** — Aurora / Fire / Frost / Toxic / Void / Shock / Holy / Blood / Arcane / Plasma / Nature / Shadow. One click swaps the whole look and motion.
-- **Particles and trails** — tune the rate, size, and life of the surface particles, and switch on trailing tails if you want them.
-- **Per-grade on/off** — silence a whole grade when you don't want an aura on low-grade weapons.
+- **Shell, waves, particles** — layer count, spread distance, concentric waves, surface particle rate/size/life, and trailing tails.
 - **Global strength** — subtle / normal / intense.
-- **Random generator** — produces a coherent color pair and matching tempo in one click.
+
+## Bullet Trails — by ammo grade
+
+Every shot leaves a **coloured tail matched to the grade of the ammo you have loaded.** Weapon grade and ammo grade are separate axes, so your gun and your bullets can run different colours.
+
+- **Colour and shape per grade** — head colour, tail colour, trail length, head and tail width, opacity, brightness, glow.
+- **Animated preview** — watch a single bullet fly past with your settings. The time axis matches the real thing, so you can see exactly how far `length 0.3s` reaches.
+- **Applies to** — your shots only, or everyone's.
+
+## Muzzle Flash — by ammo grade
+
+Firing bursts a **grade-coloured flash at the barrel.** It reads off the same ammo grade as the trails, so the colour that bursts at the muzzle is the colour that flies downrange.
+
+- **White-hot core, grade colour outside** — looks like a real flash while still reading as a grade.
+- **Size, duration, sparks** — including the count, speed, and size of the sparks thrown forward.
+- **Hide the game's own flash** — stacking on top of it doubles the brightness. Turn this on when you want the colour clean.
+- **Preview loops at a realistic rate of fire** — a flash lasts about 0.05s, so a single burst is too quick to judge. You see it the way you'll see it in a firefight.
+
+## The settings window
+
+Opens from the `Aura Settings` button in the pause menu, built with the game's own font and colors. Tabs at the top switch between the three effects.
+
+- **Color picker** — grab a color from the saturation/value square and hue bar, or type an exact value as HEX (`#FF8800`) or R/G/B.
+- **Per-grade on/off** — silence a whole grade when you don't want the effect on low-grade gear.
+- **Random generator** — rolls colour *and* shape in one click. It's seeded, so note the seed down when you get a combination you like.
 
 ## How to use
 
 1. Press `ESC` in game to open the pause menu.
 2. Click `Aura Settings`.
-3. Pick a grade, adjust the color and shape, then press `Save changes`.
+3. Pick the `Weapon Aura`, `Bullet Trails`, or `Muzzle Flash` tab at the top.
+4. Pick a grade, adjust the color and shape, then press `Save changes`. Saving writes all three tabs at once.
 
-Saved settings load automatically next time, and `Restore defaults` puts everything back whenever you want. Aiming and firing are blocked while the window is open, and `ESC` closes just the window.
+Saved settings load automatically next time. `Restore defaults` only resets the tab you are looking at. Aiming and firing are blocked while the window is open, and `ESC` closes just the window.
 
 ## Languages
 

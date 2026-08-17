@@ -76,3 +76,111 @@ preset_plasma,等离子
 preset_nature,自然
 preset_shadow,暗影
 preset_applied,已为品质 {0} 应用“{1}”模板。
+window_title_trail,子弹拖尾 — 品质 {0} {1}
+tab_aura,武器光环
+tab_trail,子弹拖尾
+trail_section_grade,子弹品质选择
+trail_follow_ammo,跟随已装填子弹品质
+trail_follow_state,跟随子弹
+trail_manual_state,手动选择
+trail_applies_to_loaded,→ 立即应用到当前装填的子弹
+trail_preview_only,→ 目前仅在预览中生效
+trail_status_ammo,子弹：{0}
+trail_status_grade,子弹品质 {0}
+trail_status_no_ammo,没有子弹（手持枪械并装填后显示）
+trail_status_editing,编辑中：品质 {0}（{1}）
+trail_on,开启子弹拖尾
+trail_off,关闭子弹拖尾
+trail_off_notice,子弹拖尾已关闭
+trail_scope,应用对象
+trail_scope_player,我的子弹
+trail_scope_everyone,所有子弹
+trail_grade_on,开启该品质拖尾
+trail_grade_off,关闭该品质拖尾
+trail_grade_disabled_notice,该品质子弹不会绘制拖尾
+trail_section_color_head,头部颜色（子弹侧）
+trail_section_color_tail,尾部颜色（消散侧）
+trail_section_shape,形状
+trail_field_length,拖尾长度
+trail_field_start_width,头部粗细
+trail_field_end_width,尾部粗细
+trail_field_alpha,不透明度
+trail_field_intensity,亮度
+trail_glow_on,开启发光
+trail_glow_off,关闭发光
+trail_random_applied,已为品质 {0} 的拖尾应用随机效果（种子 {1}）。
+trail_reset_done,子弹拖尾已恢复默认值
+window_title_muzzle,枪口火焰 — 品质 {0} {1}
+tab_muzzle,枪口火焰
+muzzle_section_grade,子弹品质选择
+muzzle_follow_ammo,跟随已装填子弹品质
+muzzle_follow_state,跟随子弹
+muzzle_manual_state,手动选择
+muzzle_applies_to_loaded,→ 立即应用到当前装填的子弹
+muzzle_preview_only,→ 目前仅在预览中生效
+muzzle_status_editing,正在编辑：品质 {0}（{1}）
+muzzle_on,开启枪口火焰
+muzzle_off,关闭枪口火焰
+muzzle_off_notice,枪口火焰已关闭
+muzzle_scope,应用对象
+muzzle_scope_player,我的枪
+muzzle_scope_everyone,所有枪
+muzzle_grade_on,开启该品质火焰
+muzzle_grade_off,关闭该品质火焰
+muzzle_grade_disabled_notice,该品质子弹不会绘制枪口火焰
+muzzle_section_color_inner,中心颜色
+muzzle_section_color_outer,外围颜色（体现品质）
+muzzle_section_shape,形状
+muzzle_section_sparks,火星
+muzzle_field_size,大小
+muzzle_field_duration,持续时间
+muzzle_field_alpha,不透明度
+muzzle_field_intensity,亮度
+muzzle_field_spark_count,火星数量
+muzzle_field_spark_size,火星大小
+muzzle_preview_note,实际效果的实时循环播放
+muzzle_random_applied,已为品质 {0} 的火焰应用随机效果（种子 {1}）。
+muzzle_reset_done,枪口火焰已恢复默认值
+muzzle_mode,方式
+muzzle_mode_tint,仅改颜色
+muzzle_mode_replace,整体替换
+muzzle_field_size_scale,大小倍率
+muzzle_section_look,形状与预设
+muzzle_shape_prev,◀
+muzzle_shape_next,▶
+muzzle_shape_rescan,↻
+muzzle_shape_glow,光晕
+muzzle_shape_heart,爱心
+muzzle_shape_star,星星
+muzzle_shape_diamond,菱形
+muzzle_shape_ring,圆环
+muzzle_shape_sparkle,闪光
+muzzle_preset_flash,经典火焰
+muzzle_preset_hearts,爱心飘飘
+muzzle_preset_stardust,星尘
+muzzle_preset_applied,已为品质 {0} 应用「{1}」预设。
+muzzle_field_spark_spread,扩散角度
+muzzle_field_spark_spin,旋转速度
+muzzle_stretch_on,沿运动方向拉伸
+muzzle_stretch_off,不拉伸
+muzzle_mode_overlay,同时显示
+muzzle_field_spark_distance,飞行距离
+muzzle_field_spark_rise,上升高度
+muzzle_preview_need_shot,开一枪后这里会显示该枪的真实火焰
+muzzle_section_draw,自己绘制形状
+muzzle_shape_name,名称
+muzzle_shape_save,保存并使用
+muzzle_shape_random,随机生成
+muzzle_shape_clear,清空画板
+muzzle_shape_load,载入该品质的形状
+muzzle_shape_delete,删除该名称形状
+muzzle_shape_hint,拖动即可涂色。从已涂格开始则为擦除。
+muzzle_shape_saved,已保存「{0}」并应用到该品质。
+muzzle_shape_loaded,已将「{0}」载入画板。
+muzzle_shape_deleted,已删除「{0}」。
+muzzle_shape_randomised,已随机生成形状（种子 {0}）。
+muzzle_shape_need_name,请先填写名称。
+muzzle_shape_empty,画板是空的，请先涂色再保存。
+muzzle_shape_full,最多可保存 {0} 个形状。
+muzzle_shape_save_failed,形状保存失败。
+muzzle_shape_not_drawn,这不是你绘制的形状。

@@ -113,6 +113,71 @@ namespace WeaponAura.UI
         private bool _followWeapon = true;
         private bool _isOpen;
 
+        // ── 탭 ──────────────────────────────────────────────────────
+
+        /// <summary>창 상단 탭. 무기 오라와 탄환 잔상은 서로 다른 설정이라 화면을 나눕니다.</summary>
+        private enum WindowTab
+        {
+            Aura = 0,
+            Trail = 1,
+            Muzzle = 2,
+        }
+
+        private WindowTab _tab = WindowTab.Aura;
+
+        private GameObject? _auraBody;
+        private GameObject? _trailBody;
+        private GameObject? _muzzleBody;
+
+        private readonly List<KeyValuePair<WindowTab, Button>> _tabButtons =
+            new List<KeyValuePair<WindowTab, Button>>();
+
+        /// <summary>탭을 바꾸고 그 탭의 값으로 화면을 다시 채웁니다.</summary>
+        private void SelectTab(WindowTab tab)
+        {
+            // 잔상 탭 구성에 실패했으면(아래 BuildUI에서 따로 감쌉니다) 그쪽으로 넘어가 봐야
+            // 빈 화면만 보입니다. 무기 오라 탭으로 되돌립니다.
+            if (tab == WindowTab.Trail && _trailBody == null)
+                tab = WindowTab.Aura;
+            if (tab == WindowTab.Muzzle && _muzzleBody == null)
+                tab = WindowTab.Aura;
+
+            _tab = tab;
+
+            if (_auraBody != null)
+                _auraBody.SetActive(tab == WindowTab.Aura);
+            if (_trailBody != null)
+                _trailBody.SetActive(tab == WindowTab.Trail);
+            if (_muzzleBody != null)
+                _muzzleBody.SetActive(tab == WindowTab.Muzzle);
+
+            foreach (var pair in _tabButtons)
+            {
+                if (pair.Value != null && pair.Value.targetGraphic != null)
+                    pair.Value.targetGraphic.color = pair.Key == tab ? ButtonAccentColor : ButtonColor;
+            }
+
+            // 안내 문구를 먼저 비우고 채웁니다 — 순서가 반대면 새 탭이 띄운 안내
+            // ("이 등급은 잔상이 꺼져 있습니다" 등)까지 같이 지워집니다.
+            ShowHint("");
+
+            if (tab == WindowTab.Aura)
+            {
+                SyncFromProfile();
+            }
+            else if (tab == WindowTab.Trail)
+            {
+                // 탭에 들어올 때마다 미리보기 총알을 왼쪽 끝에서 다시 출발시킵니다.
+                _trailPreviewTime = 0f;
+                SyncTrailFromProfile();
+            }
+            else
+            {
+                _muzzlePreviewTime = 0f;
+                SyncMuzzleFromProfile();
+            }
+        }
+
         public bool IsOpen => _isOpen;
 
         /// <summary>
@@ -154,23 +219,66 @@ namespace WeaponAura.UI
                 Show();
         }
 
+        /// <summary>
+        /// 창을 엽니다.
+        ///
+        /// 순서가 중요합니다. 게임은 <c>PauseMenu.Shown</c>이 true일 때만 시간을 멈추는데
+        /// (<c>TimeScaleManager.Update</c> → <c>GameManager.Paused</c> → <c>pauseMenu.Shown</c>),
+        /// 게임의 <c>UIPanel.OpenChild</c>는 자식 패널이 열리면 일시정지 메뉴를 <b>숨겨</b> 버립니다.
+        /// 그래서 이 창이 떠 있는 동안은 <see cref="IsShown"/>을 근거로 "정지 중"이라고 위장합니다.
+        ///
+        /// 즉 <c>_isOpen</c>이 곧 "게임을 멈춰 둘 근거"입니다. 이걸 구성이 다 끝난 뒤에 세우면,
+        /// 창을 만드는 도중 예외가 하나만 나도 캔버스(기본 활성)는 이미 화면에 떠 있는데
+        /// 게임은 계속 돌아가는 상태가 됩니다. 그래서 캔버스를 띄우자마자 먼저 세웁니다.
+        /// </summary>
         protected override void OnOpen()
         {
             try
             {
                 EnsureCanvas();
-                BuildUI();
-                SyncFromProfile();
-
-                if (_canvasRoot != null)
-                    _canvasRoot.SetActive(true);
-
-                _isOpen = true;
-                HookCancel(true);
             }
             catch (Exception ex)
             {
-                UnityEngine.Debug.LogError($"[WeaponAura] 설정 창 열기 실패: {ex}");
+                UnityEngine.Debug.LogError($"[WeaponAura] 설정 창 캔버스 생성 실패: {ex}");
+                return;
+            }
+
+            if (_canvasRoot == null)
+                return;
+
+            _canvasRoot.SetActive(true);
+            _isOpen = true;
+            HookCancel(true);
+
+            // 모드 활성화 때 패치가 실패했으면 여기서 한 번 더 시도합니다.
+            // 이게 없으면 게임이 멈추지 않는 채로 창만 뜹니다.
+            //
+            // 반드시 따로 감쌉니다. Harmony를 못 불러오면 이 타입을 건드리는 것만으로
+            // TypeLoadException이 납니다 — 그 예외가 여기서 새어 나가면 창 자체가 안 열립니다.
+            // (게임이 안 멈추는 것보다 창이 아예 안 열리는 쪽이 훨씬 나쁩니다)
+            try
+            {
+                if (!Patches.PlayerInputBlockPatch.IsApplied)
+                {
+                    UnityEngine.Debug.LogWarning(
+                        "[WeaponAura] 정지·입력 차단 패치가 걸려 있지 않습니다. 지금 다시 시도합니다.");
+                    Patches.PlayerInputBlockPatch.ApplyPatches();
+                }
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($"[WeaponAura] 정지·입력 차단 패치 확인 실패: {ex}");
+            }
+
+            try
+            {
+                BuildUI();
+                SelectTab(_tab);
+            }
+            catch (Exception ex)
+            {
+                // 여기서 실패해도 창은 이미 "열린" 상태입니다 — 게임은 멈춰 있고 ESC로 닫힙니다.
+                UnityEngine.Debug.LogError($"[WeaponAura] 설정 창 구성 실패: {ex}");
             }
         }
 
@@ -227,6 +335,9 @@ namespace WeaponAura.UI
             _preview?.Dispose();
             _preview = null;
 
+            DisposeTrailPreview();
+            DisposeMuzzlePreview();
+
             if (_canvasRoot != null)
                 Destroy(_canvasRoot);
 
@@ -245,6 +356,20 @@ namespace WeaponAura.UI
                 Cursor.lockState = CursorLockMode.None;
             if (!Cursor.visible)
                 Cursor.visible = true;
+
+            // 탄환 잔상 탭에서는 무기 미리보기 무대를 돌릴 이유가 없습니다.
+            // (매 프레임 카메라 렌더라서 안 보이는 동안 돌리면 그냥 낭비입니다)
+            if (_tab == WindowTab.Trail)
+            {
+                UpdateTrailTab();
+                return;
+            }
+
+            if (_tab == WindowTab.Muzzle)
+            {
+                UpdateMuzzleTab();
+                return;
+            }
 
             if (_followWeapon)
             {

@@ -76,3 +76,111 @@ preset_plasma,Plasma
 preset_nature,Nature
 preset_shadow,Shadow
 preset_applied,Applied the "{1}" template to grade {0}.
+window_title_trail,Bullet Trails — Grade {0} {1}
+tab_aura,Weapon Aura
+tab_trail,Bullet Trails
+trail_section_grade,Ammo grade
+trail_follow_ammo,Follow the loaded ammo
+trail_follow_state,following ammo
+trail_manual_state,picked by hand
+trail_applies_to_loaded,→ Applies to the ammo you have loaded
+trail_preview_only,→ Preview only for now
+trail_status_ammo,"Ammo: {0}"
+trail_status_grade,Ammo grade {0}
+trail_status_no_ammo,No ammo loaded (hold a gun and reload)
+trail_status_editing,Editing: grade {0} ({1})
+trail_on,Turn bullet trails on
+trail_off,Turn bullet trails off
+trail_off_notice,Bullet trails are off
+trail_scope,Applies to
+trail_scope_player,My shots
+trail_scope_everyone,Everyone
+trail_grade_on,Enable trail for this grade
+trail_grade_off,Disable trail for this grade
+trail_grade_disabled_notice,This ammo grade draws no trail
+trail_section_color_head,Head colour (bullet side)
+trail_section_color_tail,Tail colour (fading side)
+trail_section_shape,Shape
+trail_field_length,Trail length
+trail_field_start_width,Head width
+trail_field_end_width,Tail width
+trail_field_alpha,Opacity
+trail_field_intensity,Brightness
+trail_glow_on,Turn glow on
+trail_glow_off,Turn glow off
+trail_random_applied,Applied a random trail to grade {0} (seed {1}).
+trail_reset_done,Bullet trails reset to defaults
+window_title_muzzle,Muzzle Flash — Grade {0} {1}
+tab_muzzle,Muzzle Flash
+muzzle_section_grade,Ammo grade
+muzzle_follow_ammo,Follow the loaded ammo
+muzzle_follow_state,following ammo
+muzzle_manual_state,picked by hand
+muzzle_applies_to_loaded,→ Applies to the ammo you have loaded
+muzzle_preview_only,→ Preview only for now
+muzzle_status_editing,Editing: grade {0} ({1})
+muzzle_on,Turn muzzle flash on
+muzzle_off,Turn muzzle flash off
+muzzle_off_notice,Muzzle flash is off
+muzzle_scope,Applies to
+muzzle_scope_player,My gun
+muzzle_scope_everyone,Everyone
+muzzle_grade_on,Enable flash for this grade
+muzzle_grade_off,Disable flash for this grade
+muzzle_grade_disabled_notice,This ammo grade draws no muzzle flash
+muzzle_section_color_inner,Core colour
+muzzle_section_color_outer,Outer colour (where the grade shows)
+muzzle_section_shape,Shape
+muzzle_section_sparks,Sparks
+muzzle_field_size,Size
+muzzle_field_duration,Duration
+muzzle_field_alpha,Opacity
+muzzle_field_intensity,Brightness
+muzzle_field_spark_count,Spark count
+muzzle_field_spark_size,Spark size
+muzzle_preview_note,The real effect, captured and looped
+muzzle_random_applied,Applied a random flash to grade {0} (seed {1}).
+muzzle_reset_done,Muzzle flash reset to defaults
+muzzle_mode,Mode
+muzzle_mode_tint,Recolour
+muzzle_mode_replace,Replace
+muzzle_field_size_scale,Size multiplier
+muzzle_section_look,Shape and presets
+muzzle_shape_prev,◀
+muzzle_shape_next,▶
+muzzle_shape_rescan,↻
+muzzle_shape_glow,Glow
+muzzle_shape_heart,Heart
+muzzle_shape_star,Star
+muzzle_shape_diamond,Diamond
+muzzle_shape_ring,Ring
+muzzle_shape_sparkle,Sparkle
+muzzle_preset_flash,Classic flash
+muzzle_preset_hearts,Popping hearts
+muzzle_preset_stardust,Stardust
+muzzle_preset_applied,Applied the "{1}" preset to grade {0}.
+muzzle_field_spark_spread,Spread angle
+muzzle_field_spark_spin,Spin speed
+muzzle_stretch_on,Stretch along travel
+muzzle_stretch_off,Do not stretch
+muzzle_mode_overlay,Both
+muzzle_field_spark_distance,Travel distance
+muzzle_field_spark_rise,Rise height
+muzzle_preview_need_shot,Fire once and this gun's real flash appears here
+muzzle_section_draw,Draw your own shape
+muzzle_shape_name,Name
+muzzle_shape_save,Save and use
+muzzle_shape_random,Randomise
+muzzle_shape_clear,Clear the grid
+muzzle_shape_load,Load this grade's shape
+muzzle_shape_delete,Delete this name
+muzzle_shape_hint,Drag to paint. Starting on a filled cell erases instead.
+muzzle_shape_saved,Saved "{0}" and applied it to this grade.
+muzzle_shape_loaded,Loaded "{0}" into the grid.
+muzzle_shape_deleted,Deleted "{0}".
+muzzle_shape_randomised,Generated a random shape (seed {0}).
+muzzle_shape_need_name,Type a name first.
+muzzle_shape_empty,The grid is empty. Paint something first.
+muzzle_shape_full,You can keep up to {0} shapes.
+muzzle_shape_save_failed,Could not save the shape.
+muzzle_shape_not_drawn,That is not a shape you drew.

@@ -64,6 +64,36 @@ namespace WeaponAura.UI
 
             BuildHeader(panel.transform);
             BuildBody(panel.transform);
+
+            // 잔상 탭은 따로 감쌉니다. 여기서 실패해도 무기 오라 탭과 창 자체는 멀쩡해야 합니다.
+            try
+            {
+                BuildTrailBody(panel.transform);
+            }
+            catch (Exception ex)
+            {
+                // 만들다 만 본문이 활성인 채로 남으면 오라 탭과 세로로 겹쳐 쌓여서
+                // 패널이 화면 밖까지 늘어납니다. 참조를 버리기 전에 반드시 꺼 둡니다.
+                if (_trailBody != null)
+                    _trailBody.SetActive(false);
+
+                _trailBody = null;
+                UnityEngine.Debug.LogError($"[WeaponAura] 탄환 잔상 탭 구성 실패: {ex}");
+            }
+
+            try
+            {
+                BuildMuzzleBody(panel.transform);
+            }
+            catch (Exception ex)
+            {
+                if (_muzzleBody != null)
+                    _muzzleBody.SetActive(false);
+
+                _muzzleBody = null;
+                UnityEngine.Debug.LogError($"[WeaponAura] 총구 화염 탭 구성 실패: {ex}");
+            }
+
             BuildFooter(panel.transform);
 
             ApplyFont(panel.gameObject);
@@ -87,7 +117,25 @@ namespace WeaponAura.UI
             var flexible = _headerText.gameObject.AddComponent<LayoutElement>();
             flexible.flexibleWidth = 1f;
 
-            MakeButton(header, L.Window.Close, 120f, Hide, ButtonColor);
+            // 탭은 머리말 줄에 얹습니다. 따로 한 줄을 내주면 창이 1080 화면 높이를 넘습니다.
+            _tabButtons.Clear();
+            AddTabButton(header, L.Tab.Aura, WindowTab.Aura);
+            AddTabButton(header, L.Tab.Trail, WindowTab.Trail);
+            AddTabButton(header, L.Tab.Muzzle, WindowTab.Muzzle);
+
+            MakeButton(header, L.Window.Close, 110f, Hide, ButtonColor);
+        }
+
+        /// <summary>
+        /// 무기 오라 / 탄환 잔상 탭 버튼.
+        ///
+        /// 두 기능은 건드리는 값이 완전히 달라서(무기 등급 vs 탄약 등급) 한 화면에 겹쳐 놓으면
+        /// 어느 등급을 편집 중인지 알 수 없게 됩니다. 본문을 통째로 갈아 끼웁니다.
+        /// </summary>
+        private void AddTabButton(Transform parent, string label, WindowTab tab)
+        {
+            var button = MakeButton(parent, label, 168f, () => SelectTab(tab), ButtonColor);
+            _tabButtons.Add(new KeyValuePair<WindowTab, Button>(tab, button));
         }
 
         // ── 본문 ────────────────────────────────────────────────────
@@ -95,6 +143,7 @@ namespace WeaponAura.UI
         private void BuildBody(Transform parent)
         {
             var body = MakeRect("Body", parent);
+            _auraBody = body.gameObject;
 
             // 왼쪽 열(미리보기 360 + 확대 + 상태 + 등급 격자 + 추가/삭제 + 따라가기)이
             // 들어가는 높이입니다. 이보다 작으면 아래 항목이 패널 밖으로 밀립니다.
@@ -328,6 +377,15 @@ namespace WeaponAura.UI
 
         private void BuildRightColumn(Transform parent)
         {
+            BuildControls(BuildScrollColumn(parent));
+        }
+
+        /// <summary>
+        /// 오른쪽에 붙는 세로 스크롤 열. 내용이 넘칠 때만 막대가 나타납니다.
+        /// 반환값은 항목을 쌓아 넣을 내용 컨테이너입니다.
+        /// </summary>
+        private RectTransform BuildScrollColumn(Transform parent)
+        {
             var column = MakeImage("Right", parent, SectionColor).rectTransform;
             var element = column.gameObject.AddComponent<LayoutElement>();
             element.flexibleWidth = 1f;
@@ -368,7 +426,7 @@ namespace WeaponAura.UI
             var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            BuildControls(content);
+            return content;
         }
 
         // ── 실제 조절 항목 ───────────────────────────────────────────

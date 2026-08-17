@@ -76,3 +76,111 @@ preset_plasma,電漿
 preset_nature,自然
 preset_shadow,暗影
 preset_applied,已為品質 {0} 套用「{1}」範本。
+window_title_trail,子彈拖尾 — 品質 {0} {1}
+tab_aura,武器光環
+tab_trail,子彈拖尾
+trail_section_grade,子彈品質選擇
+trail_follow_ammo,跟隨已裝填子彈品質
+trail_follow_state,跟隨子彈
+trail_manual_state,手動選擇
+trail_applies_to_loaded,→ 立即套用到目前裝填的子彈
+trail_preview_only,→ 目前僅在預覽中生效
+trail_status_ammo,子彈：{0}
+trail_status_grade,子彈品質 {0}
+trail_status_no_ammo,沒有子彈（手持槍械並裝填後顯示）
+trail_status_editing,編輯中：品質 {0}（{1}）
+trail_on,開啟子彈拖尾
+trail_off,關閉子彈拖尾
+trail_off_notice,子彈拖尾已關閉
+trail_scope,套用對象
+trail_scope_player,我的子彈
+trail_scope_everyone,所有子彈
+trail_grade_on,開啟該品質拖尾
+trail_grade_off,關閉該品質拖尾
+trail_grade_disabled_notice,該品質子彈不會繪製拖尾
+trail_section_color_head,頭部顏色（子彈側）
+trail_section_color_tail,尾部顏色（消散側）
+trail_section_shape,形狀
+trail_field_length,拖尾長度
+trail_field_start_width,頭部粗細
+trail_field_end_width,尾部粗細
+trail_field_alpha,不透明度
+trail_field_intensity,亮度
+trail_glow_on,開啟發光
+trail_glow_off,關閉發光
+trail_random_applied,已為品質 {0} 的拖尾套用隨機效果（種子 {1}）。
+trail_reset_done,子彈拖尾已恢復預設值
+window_title_muzzle,槍口火焰 — 品質 {0} {1}
+tab_muzzle,槍口火焰
+muzzle_section_grade,子彈品質選擇
+muzzle_follow_ammo,跟隨已裝填子彈品質
+muzzle_follow_state,跟隨子彈
+muzzle_manual_state,手動選擇
+muzzle_applies_to_loaded,→ 立即套用到目前裝填的子彈
+muzzle_preview_only,→ 目前僅在預覽中生效
+muzzle_status_editing,正在編輯：品質 {0}（{1}）
+muzzle_on,開啟槍口火焰
+muzzle_off,關閉槍口火焰
+muzzle_off_notice,槍口火焰已關閉
+muzzle_scope,套用對象
+muzzle_scope_player,我的槍
+muzzle_scope_everyone,所有槍
+muzzle_grade_on,開啟該品質火焰
+muzzle_grade_off,關閉該品質火焰
+muzzle_grade_disabled_notice,該品質子彈不會繪製槍口火焰
+muzzle_section_color_inner,中心顏色
+muzzle_section_color_outer,外圍顏色（呈現品質）
+muzzle_section_shape,形狀
+muzzle_section_sparks,火星
+muzzle_field_size,大小
+muzzle_field_duration,持續時間
+muzzle_field_alpha,不透明度
+muzzle_field_intensity,亮度
+muzzle_field_spark_count,火星數量
+muzzle_field_spark_size,火星大小
+muzzle_preview_note,實際效果的即時循環播放
+muzzle_random_applied,已為品質 {0} 的火焰套用隨機效果（種子 {1}）。
+muzzle_reset_done,槍口火焰已恢復預設值
+muzzle_mode,方式
+muzzle_mode_tint,僅改顏色
+muzzle_mode_replace,整體替換
+muzzle_field_size_scale,大小倍率
+muzzle_section_look,形狀與預設
+muzzle_shape_prev,◀
+muzzle_shape_next,▶
+muzzle_shape_rescan,↻
+muzzle_shape_glow,光暈
+muzzle_shape_heart,愛心
+muzzle_shape_star,星星
+muzzle_shape_diamond,菱形
+muzzle_shape_ring,圓環
+muzzle_shape_sparkle,閃光
+muzzle_preset_flash,經典火焰
+muzzle_preset_hearts,愛心飄飄
+muzzle_preset_stardust,星塵
+muzzle_preset_applied,已為品質 {0} 套用「{1}」預設。
+muzzle_field_spark_spread,擴散角度
+muzzle_field_spark_spin,旋轉速度
+muzzle_stretch_on,沿移動方向拉伸
+muzzle_stretch_off,不拉伸
+muzzle_mode_overlay,同時顯示
+muzzle_field_spark_distance,飛行距離
+muzzle_field_spark_rise,上升高度
+muzzle_preview_need_shot,開一槍後這裡會顯示該槍的真實火焰
+muzzle_section_draw,自行繪製形狀
+muzzle_shape_name,名稱
+muzzle_shape_save,儲存並使用
+muzzle_shape_random,隨機產生
+muzzle_shape_clear,清空畫板
+muzzle_shape_load,載入該品質的形狀
+muzzle_shape_delete,刪除該名稱形狀
+muzzle_shape_hint,拖曳即可塗色。從已塗格開始則為擦除。
+muzzle_shape_saved,已儲存「{0}」並套用到該品質。
+muzzle_shape_loaded,已將「{0}」載入畫板。
+muzzle_shape_deleted,已刪除「{0}」。
+muzzle_shape_randomised,已隨機產生形狀（種子 {0}）。
+muzzle_shape_need_name,請先填寫名稱。
+muzzle_shape_empty,畫板是空的，請先塗色再儲存。
+muzzle_shape_full,最多可儲存 {0} 個形狀。
+muzzle_shape_save_failed,形狀儲存失敗。
+muzzle_shape_not_drawn,這不是你繪製的形狀。

@@ -531,16 +531,29 @@ namespace WeaponAura.UI
 
         // ── 저장 · 프리셋 ────────────────────────────────────────────
 
+        /// <summary>
+        /// 저장은 탭과 무관하게 둘 다 씁니다.
+        ///
+        /// 파일이 두 개로 나뉘어 있다는 건 우리 사정이지 사용자 사정이 아닙니다.
+        /// 오라를 손보고 잔상 탭에서 저장을 눌렀다고 오라 쪽이 날아가면 안 됩니다.
+        /// </summary>
         private void SaveCurrent()
         {
-            if (WeaponAuraProfiles.Save(out string path))
+            bool auraSaved = WeaponAuraProfiles.Save(out string auraPath);
+            bool trailSaved = BulletTrailProfiles.Save(out string trailPath);
+            bool muzzleSaved = MuzzleFlashProfiles.Save(out string muzzlePath);
+
+            if (auraSaved && trailSaved && muzzleSaved)
             {
-                UnityEngine.Debug.Log($"[WeaponAura] 설정을 저장했습니다: {path}");
+                UnityEngine.Debug.Log(
+                    $"[WeaponAura] 설정을 저장했습니다: {auraPath}, {trailPath}, {muzzlePath}");
                 ShowHint(L.Action.Saved);
             }
             else
             {
-                UnityEngine.Debug.LogWarning("[WeaponAura] 설정 저장에 실패했습니다.");
+                UnityEngine.Debug.LogWarning(
+                    $"[WeaponAura] 설정 저장에 실패했습니다 " +
+                    $"(오라={auraSaved}, 탄환 잔상={trailSaved}, 총구 화염={muzzleSaved}).");
                 ShowHint(L.Action.SaveFailed);
             }
         }
@@ -551,6 +564,20 @@ namespace WeaponAura.UI
         /// </summary>
         private void RandomizeCurrent()
         {
+            // 무작위·초기화는 지금 보고 있는 탭에만 걸립니다.
+            // (안 보이는 탭 값이 조용히 바뀌면 되돌릴 방법이 없습니다)
+            if (_tab == WindowTab.Trail)
+            {
+                RandomizeCurrentTrail();
+                return;
+            }
+
+            if (_tab == WindowTab.Muzzle)
+            {
+                RandomizeCurrentMuzzle();
+                return;
+            }
+
             var target = CurrentProfile();
             if (target == null)
                 return;
@@ -617,6 +644,18 @@ namespace WeaponAura.UI
 
         private void ResetDefaults()
         {
+            if (_tab == WindowTab.Trail)
+            {
+                ResetTrailDefaults();
+                return;
+            }
+
+            if (_tab == WindowTab.Muzzle)
+            {
+                ResetMuzzleDefaults();
+                return;
+            }
+
             WeaponAuraProfiles.ResetToDefaults();
             AfterProfilesReplaced();
             ShowHint(L.Action.ResetDone);
