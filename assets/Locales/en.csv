@@ -244,3 +244,36 @@ section_texture,Shape texture
 section_texture_default,Default (none)
 field_world_trail_on,Leave a trail behind
 field_world_trail_off,Follow the weapon
+section_basic,Basic
+section_advanced,Advanced
+section_surface,Surface and noise
+section_motion,Motion and trails
+section_flipbook,Flipbook (tiled sheet)
+section_ring,Ring (orbiting lights)
+section_share,Share settings
+field_roundness,Roundness
+field_boxiness,Boxiness
+field_noise_strength,Noise strength
+field_noise_frequency,Noise frequency
+field_rotation_speed,Spin speed
+field_drag,Drag
+field_tiles_x,Columns
+field_tiles_y,Rows
+field_flipbook_fps,Play speed (0 = lifetime)
+field_ring_on,Enable ring
+field_ring_off,Disable ring
+field_ring_count,Ring count
+field_ring_radius,Ring radius
+field_ring_size,Ring dot size
+field_ring_speed,Ring speed
+field_ring_tilt,Ring tilt
+field_ring_bob,Ring bob
+share_copy,Copy this grade
+share_paste,Paste and apply
+share_copied,Copied grade {0} to the clipboard ({1} chars).
+share_pasted,Applied the pasted settings to grade {0}.
+share_not_found,No aura settings on the clipboard.
+share_failed,Could not read those settings.
+field_ring_roll,Ring roll
+field_ring_texture,Ring shape
+field_ring_texture_same,Same as aura

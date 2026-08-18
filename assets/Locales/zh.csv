@@ -244,3 +244,36 @@ section_texture,图案贴图
 section_texture_default,默认（无图案）
 field_world_trail_on,留在经过的位置
 field_world_trail_off,跟随武器移动
+section_basic,基础
+section_advanced,高级
+section_surface,表面与噪声
+section_motion,运动与拖尾
+section_flipbook,序列帧（拼贴图）
+section_ring,光环（环绕光点）
+section_share,设置分享
+field_roundness,圆润度
+field_boxiness,方正度
+field_noise_strength,噪声强度
+field_noise_frequency,噪声频率
+field_rotation_speed,旋转速度
+field_drag,减速
+field_tiles_x,横向格数
+field_tiles_y,纵向格数
+field_flipbook_fps,播放速度（0=按寿命）
+field_ring_on,开启光环
+field_ring_off,关闭光环
+field_ring_count,光点数量
+field_ring_radius,光环半径
+field_ring_size,光点大小
+field_ring_speed,旋转速度
+field_ring_tilt,光环倾角
+field_ring_bob,上下浮动
+share_copy,复制该品质设置
+share_paste,粘贴并应用
+share_copied,已将品质 {0} 的设置复制到剪贴板（{1} 字符）。
+share_pasted,已将粘贴的设置应用到品质 {0}。
+share_not_found,剪贴板中没有光环设置。
+share_failed,无法读取该设置。
+field_ring_roll,光环侧倾
+field_ring_texture,光环图案
+field_ring_texture_same,与光环相同

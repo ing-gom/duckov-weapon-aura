@@ -283,6 +283,7 @@ namespace WeaponAura.UI
             RefreshDisplayRow();
             RefreshRemoveButton();
             RefreshAuraTextureLabel();
+            RefreshRingTextureLabel();
         }
 
         // ── 켜기/끄기 · 세기 ────────────────────────────────────────
@@ -335,6 +336,23 @@ namespace WeaponAura.UI
             ApplyEdit(false);
         }
 
+        /// <summary>
+        /// 무기 주위를 도는 광점(링)을 켜고 끕니다.
+        ///
+        /// 링은 별도 파티클 시스템이라 켜고 끄면 다시 만들어야 합니다.
+        /// </summary>
+        private void ToggleRing()
+        {
+            var profile = CurrentProfile();
+            if (profile == null)
+                return;
+
+            profile.ringEnabled = !profile.ringEnabled;
+
+            RefreshDisplayRow();
+            ApplyEdit(true);
+        }
+
         private void ToggleTrail()
         {
             var profile = CurrentProfile();
@@ -372,6 +390,18 @@ namespace WeaponAura.UI
 
                 button.targetGraphic.color =
                     AuraSettings.AuraMode == pair.Key ? ButtonAccentColor : ButtonColor;
+            }
+
+            if (_ringButton != null)
+            {
+                bool ring = profile != null && profile.ringEnabled;
+
+                var label = _ringButton.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (label != null)
+                    label.text = ring ? L.Field.RingOff : L.Field.RingOn;
+
+                if (_ringButton.targetGraphic != null)
+                    _ringButton.targetGraphic.color = ring ? ButtonAccentColor : ButtonColor;
             }
 
             if (_worldTrailButton != null)
@@ -426,6 +456,11 @@ namespace WeaponAura.UI
         /// </summary>
         private void ApplyEdit(bool rebuild)
         {
+            // 미리보기는 <b>편집 중인 티어</b>를 보여 주므로, 지금 든 무기와 티어가 달라도
+            // 다시 세워야 합니다. 아래 티어 검사보다 먼저 알립니다.
+            if (rebuild)
+                _preview?.RequestRebuild();
+
             if (_editingTier != WeaponAuraSystem.CurrentTier)
                 return;
 

@@ -191,7 +191,29 @@ namespace WeaponAura.Systems
         public bool ringEnabled = false;
         public int ringCount = 6;
         public float ringRadius = 0.3f;
-        public float ringSize = 0.05f;
+        /// <summary>
+        /// 링 광점 하나의 크기(m).
+        ///
+        /// 0.05는 링이 화면에 나온 적이 없던 시절의 값이라 실제로 보면 점에 가깝습니다.
+        /// 무기가 1m 안팎이니 그 10분의 1쯤은 되어야 "도는 광점"으로 읽힙니다.
+        /// </summary>
+        public float ringSize = 0.12f;
+
+        /// <summary>
+        /// 링 광점에 씌울 그림. 비어 있으면 오라와 같은 것을 씁니다.
+        ///
+        /// 오라는 빛무리인데 링만 하트·별로 돌리고 싶은 경우가 있어서 따로 둡니다.
+        /// 총구 화염·근접 참격과 같은 목록(내장 도형 · 직접 그린 도형 · PNG)을 씁니다.
+        /// </summary>
+        public string ringTexture = "";
+
+        /// <summary>
+        /// 링 원판을 옆으로 기울이는 각도(도).
+        ///
+        /// <see cref="ringTilt"/>가 앞뒤로 젖히는 것이라면 이쪽은 좌우로 눕히는 축입니다.
+        /// 둘을 같이 쓰면 원판을 아무 방향으로나 세울 수 있습니다.
+        /// </summary>
+        public float ringRoll;
         /// <summary>초당 회전 각도</summary>
         public float ringSpeed = 80f;
         /// <summary>링 기울기(도)</summary>

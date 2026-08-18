@@ -398,23 +398,32 @@ namespace WeaponAura.UI
             _removeTierButton = MakeButton(row, L.Tier.Remove, 120f, RemoveCurrentTier, ButtonColor);
         }
 
+        /// <summary>
+        /// 무기 오라 탭의 오른쪽 열.
+        ///
+        /// 항목이 서른 개를 넘어가면서 한 줄로 늘어놓는 것만으로는 감당이 안 됐습니다.
+        /// 자주 만지는 것(색·세기·프리셋)과 성격을 다듬는 것(파동·노이즈·링·플립북)을
+        /// 갈라서, 처음 여는 사람이 무엇부터 봐야 할지 알 수 있게 합니다.
+        /// </summary>
         private void BuildRightColumn(Transform parent)
         {
-            BuildControls(BuildScrollColumn(parent));
+            _auraSections = BuildSectionedColumn(parent);
+
+            _rows.Clear();
+            BuildBasicControls(_auraSections.Basic.transform);
+            BuildAdvancedControls(_auraSections.Advanced.transform);
+
+            _auraSections.Select(false);
         }
 
         /// <summary>
-        /// 오른쪽에 붙는 세로 스크롤 열. 내용이 넘칠 때만 막대가 나타납니다.
-        /// 반환값은 항목을 쌓아 넣을 내용 컨테이너입니다.
+        /// 스크롤 한 벌(뷰포트 · 막대 · 내용 컨테이너)을 이미 자리 잡은 사각형 안에 만듭니다.
+        ///
+        /// 무기 오라 탭은 위에 기본/고급 버튼 줄을 얹어야 해서 열을 세로 레이아웃으로 쓰고,
+        /// 나머지 탭도 같은 장치를 씁니다. 자리 잡는 방식만 다르고 속은 같습니다.
         /// </summary>
-        private RectTransform BuildScrollColumn(Transform parent)
+        private RectTransform BuildScrollBody(RectTransform scrollGo)
         {
-            var column = MakeImage("Right", parent, SectionColor).rectTransform;
-            var element = column.gameObject.AddComponent<LayoutElement>();
-            element.flexibleWidth = 1f;
-
-            var scrollGo = MakeRect("Scroll", column);
-            Stretch(scrollGo);
             var scroll = scrollGo.gameObject.AddComponent<ScrollRect>();
             scroll.horizontal = false;
             scroll.movementType = ScrollRect.MovementType.Clamped;
@@ -452,12 +461,11 @@ namespace WeaponAura.UI
             return content;
         }
 
-        // ── 실제 조절 항목 ───────────────────────────────────────────
-
-        private void BuildControls(Transform parent)
+        /// <summary>
+        /// 무기 오라의 기본 항목 — 처음 여는 사람이 이것만 봐도 원하는 색이 나와야 합니다.
+        /// </summary>
+        private void BuildBasicControls(Transform parent)
         {
-            _rows.Clear();
-
             AddSectionLabel(parent, L.Section.Display);
             BuildDisplayRow(parent);
 
@@ -494,6 +502,36 @@ namespace WeaponAura.UI
             AddSlider(parent, L.Field.Spread, 0f, 0.6f, "0.000",
                 p => p.sheetSpread, (p, v) => p.sheetSpread = v);
 
+            AddSectionLabel(parent, L.Section.Presets);
+            BuildPresetGrid(parent);
+
+            // 오라도 면에 그림을 씌울 수 있습니다. 예전에는 프로필에 값만 있고 고를 곳이
+            // 없어서 개발용 IMGUI 패널로만 닿았습니다.
+            AddSectionLabel(parent, L.Section.Texture);
+            BuildAuraTextureRow(parent);
+
+            AddSectionLabel(parent, L.Section.Particles);
+            AddSlider(parent, L.Field.EmissionRate, 0f, 20f, "0",
+                p => p.emissionRate, (p, v) => p.emissionRate = v);
+            // 상한이 0.12m였습니다. 무기 실측 길이가 2m 안팎이라 그 6%밖에 안 됩니다.
+            AddSlider(parent, L.Field.ParticleSize, 0.005f, 1f, "0.000",
+                p => p.startSize, (p, v) => p.startSize = v);
+            AddSlider(parent, L.Field.ParticleLifetime, 0.2f, 3f, "0.00",
+                p => p.lifetime, (p, v) => p.lifetime = v);
+
+            AddSectionLabel(parent, L.Section.Share);
+            BuildShareRow(parent);
+        }
+
+        /// <summary>
+        /// 고급 항목.
+        ///
+        /// 여기 있는 값들은 대부분 <b>이미 동작하고 있었지만 손잡이가 없던</b> 것입니다 —
+        /// 링·플립북·노이즈·회전·감속·셸 형태. 프리셋 안에서는 쓰이는데 사용자가 만질 방법이
+        /// 개발용 IMGUI 패널(배포본에는 없음)뿐이었습니다.
+        /// </summary>
+        private void BuildAdvancedControls(Transform parent)
+        {
             AddSectionLabel(parent, L.Section.Waves);
             AddSlider(parent, L.Field.WaveCount, 0f, 12f, "0.0",
                 p => p.sheetRings, (p, v) => p.sheetRings = v);
@@ -504,34 +542,68 @@ namespace WeaponAura.UI
             AddSlider(parent, L.Field.Wobble, 0f, 0.5f, "0.00",
                 p => p.sheetWobble, (p, v) => p.sheetWobble = v);
 
-            AddSectionLabel(parent, L.Section.Presets);
-            BuildPresetGrid(parent);
+            AddSectionLabel(parent, L.Section.Surface);
+            // 0이면 무기 표면 법선 그대로(형태 유지), 1이면 동심원(퍼질수록 둥글어짐)
+            AddSlider(parent, L.Field.Roundness, 0f, 1f, "0.00",
+                p => p.sheetRoundness, (p, v) => p.sheetRoundness = v);
+            // 메시를 못 쓸 때 폴백 셸의 각짐 정도
+            AddSlider(parent, L.Field.Boxiness, 0f, 1f, "0.00",
+                p => p.sheetBoxiness, (p, v) => p.sheetBoxiness = v, rebuild: true);
+            AddSlider(parent, L.Field.NoiseStrength, 0f, 1f, "0.00",
+                p => p.noiseStrength, (p, v) => p.noiseStrength = v);
+            AddSlider(parent, L.Field.NoiseFrequency, 0.05f, 2f, "0.00",
+                p => p.noiseFrequency, (p, v) => p.noiseFrequency = v);
 
-            // 오라도 면에 그림을 씌울 수 있습니다. 예전에는 프로필에 값만 있고 고를 곳이
-            // 없어서 개발용 IMGUI 패널로만 닿았습니다.
-            AddSectionLabel(parent, L.Section.Texture);
-            BuildAuraTextureRow(parent);
-            BuildShapeEditor(parent);
-
-            AddSectionLabel(parent, L.Section.Particles);
+            AddSectionLabel(parent, L.Section.Motion);
+            AddSlider(parent, L.Field.RotationSpeed, -360f, 360f, "0",
+                p => p.rotationSpeed, (p, v) => p.rotationSpeed = v);
+            AddSlider(parent, L.Field.Drag, 0f, 1f, "0.00",
+                p => p.drag, (p, v) => p.drag = v);
             BuildWorldTrailRow(parent);
             BuildTrailRow(parent);
-            AddSlider(parent, L.Field.EmissionRate, 0f, 20f, "0",
-                p => p.emissionRate, (p, v) => p.emissionRate = v);
-            // 상한이 0.12m였습니다. 무기 실측 길이가 2m 안팎이라 그 6%밖에 안 되고,
-            // 끝까지 올려도 알갱이가 여전히 자잘합니다(총구 화염에서도 같은 이유로
-            // 상한을 열었습니다). 컨트롤러 쪽에는 하한만 있고 상한이 없어서 슬라이더만
-            // 넓히면 됩니다.
-            AddSlider(parent, L.Field.ParticleSize, 0.005f, 1f, "0.000",
-                p => p.startSize, (p, v) => p.startSize = v);
-            AddSlider(parent, L.Field.ParticleLifetime, 0.2f, 3f, "0.00",
-                p => p.lifetime, (p, v) => p.lifetime = v);
-
-            // 잔상은 파티클마다 꼬리를 붙이는 방식이라, 켜져 있을 때만 의미가 있습니다.
             AddSlider(parent, L.Field.TrailLength, 0.05f, 1f, "0.00",
                 p => p.trailLifetime, (p, v) => p.trailLifetime = v, rebuild: true);
             AddSlider(parent, L.Field.TrailWidth, 0.05f, 1.5f, "0.00",
                 p => p.trailWidth, (p, v) => p.trailWidth = v, rebuild: true);
+
+            // 플립북 — 여러 칸이 그려진 시트 한 장을 순서대로 재생합니다.
+            // vfx_textures에 4x4 시트를 넣어도 여기가 없으면 첫 칸만 계속 보입니다.
+            AddSectionLabel(parent, L.Section.Flipbook);
+            AddSlider(parent, L.Field.TilesX, 1f, 8f, "0",
+                p => p.tilesX, (p, v) => p.tilesX = Mathf.RoundToInt(v), rebuild: true);
+            AddSlider(parent, L.Field.TilesY, 1f, 8f, "0",
+                p => p.tilesY, (p, v) => p.tilesY = Mathf.RoundToInt(v), rebuild: true);
+            // 0이면 파티클 수명에 맞춰 한 바퀴 재생합니다.
+            AddSlider(parent, L.Field.FlipbookFps, 0f, 60f, "0",
+                p => p.flipbookFps, (p, v) => p.flipbookFps = v, rebuild: true);
+
+            // 링 — 무기 주위를 도는 광점. 구현은 처음부터 있었는데 고를 곳이 없었습니다.
+            AddSectionLabel(parent, L.Section.Ring);
+            BuildRingRow(parent);
+            AddSlider(parent, L.Field.RingCount, 1f, 24f, "0",
+                p => p.ringCount, (p, v) => p.ringCount = Mathf.RoundToInt(v), rebuild: true);
+            AddSlider(parent, L.Field.RingRadius, 0.05f, 1.5f, "0.00",
+                p => p.ringRadius, (p, v) => p.ringRadius = v);
+            // 오라 알갱이와 같은 범위로 엽니다. 0.6에서 잘리면 "더 키울 수 없는" 구간이 생깁니다.
+            AddSlider(parent, L.Field.RingSize, 0.01f, 1f, "0.000",
+                p => p.ringSize, (p, v) => p.ringSize = v);
+            // 음수면 반대로 돕니다.
+            AddSlider(parent, L.Field.RingSpeed, -360f, 360f, "0",
+                p => p.ringSpeed, (p, v) => p.ringSpeed = v);
+            // 기울기는 앞뒤로 젖히고, 회전축은 좌우로 눕힙니다. 둘을 같이 쓰면
+            // 원판을 아무 방향으로나 세울 수 있습니다.
+            AddSlider(parent, L.Field.RingTilt, -90f, 90f, "0",
+                p => p.ringTilt, (p, v) => p.ringTilt = v);
+            AddSlider(parent, L.Field.RingRoll, -90f, 90f, "0",
+                p => p.ringRoll, (p, v) => p.ringRoll = v);
+            AddSlider(parent, L.Field.RingBob, 0f, 0.3f, "0.00",
+                p => p.ringBob, (p, v) => p.ringBob = v);
+
+            // 링만 다른 문양으로 돌릴 수 있게 그림을 따로 고릅니다.
+            BuildRingTextureRow(parent);
+
+            // 라벨은 BuildShapeEditor가 자기 안에서 그립니다. 여기서 또 붙이면 두 번 나옵니다.
+            BuildShapeEditor(parent);
         }
 
         /// <summary>
@@ -681,6 +753,114 @@ namespace WeaponAura.UI
             layout.childForceExpandWidth = true;
 
             _worldTrailButton = MakeButton(row, "", 0f, ToggleWorldTrail, ButtonColor);
+        }
+
+        /// <summary>
+        /// 링 광점에 씌울 그림 고르기.
+        ///
+        /// 오라와 <b>따로</b> 고릅니다 — 오라는 빛무리로 두고 링만 하트·별로 돌리는 조합이
+        /// 자연스럽습니다. 비워 두면 오라와 같은 그림을 씁니다.
+        /// </summary>
+        private void BuildRingTextureRow(Transform parent)
+        {
+            var row = MakeRect("RingTextureRow", parent);
+            SetHeight(row, 40f);
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+
+            var label = MakeText("RingTextureLabel", row, L.Field.RingTexture, 18, DimTextColor,
+                TextAlignmentOptions.MidlineLeft);
+            SetWidth(label.rectTransform, 100f);
+
+            MakeButton(row, L.Muzzle.ShapePrev, 56f, () => CycleRingTexture(-1), ButtonColor);
+
+            _ringTextureLabel = MakeText("RingTextureName", row, "-", 19, TextColor,
+                TextAlignmentOptions.Center);
+            _ringTextureLabel.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+
+            MakeButton(row, L.Muzzle.ShapeNext, 56f, () => CycleRingTexture(1), ButtonColor);
+        }
+
+        private void CycleRingTexture(int delta)
+        {
+            var profile = CurrentProfile();
+            if (profile == null)
+                return;
+
+            var choices = AuraTextureChoices();
+            int index = choices.IndexOf(profile.ringTexture ?? "");
+            if (index < 0)
+                index = 0;
+
+            profile.ringTexture = choices[(int)Mathf.Repeat(index + delta, choices.Count)];
+
+            RefreshRingTextureLabel();
+            ApplyEdit(true);
+        }
+
+        private void RefreshRingTextureLabel()
+        {
+            if (_ringTextureLabel == null)
+                return;
+
+            var profile = CurrentProfile();
+            if (profile == null)
+                return;
+
+            string picked = profile.ringTexture ?? "";
+
+            if (string.IsNullOrEmpty(picked))
+            {
+                _ringTextureLabel.text = L.Field.RingTextureSame;
+                return;
+            }
+
+            _ringTextureLabel.text =
+                Enum.TryParse(picked, out MuzzleFlashShape shape) &&
+                Array.IndexOf(MuzzleFlashShapes.All, shape) >= 0
+                    ? LocalizedShapeName(shape)
+                    : picked;
+        }
+
+        /// <summary>무기 주위를 도는 광점(링) 켜기/끄기.</summary>
+        private void BuildRingRow(Transform parent)
+        {
+            var row = MakeRect("RingRow", parent);
+            SetHeight(row, 40f);
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+
+            _ringButton = MakeButton(row, "", 0f, ToggleRing, ButtonColor);
+        }
+
+        /// <summary>
+        /// 설정을 문자열로 주고받는 줄.
+        ///
+        /// 프로필은 이미 JSON으로 저장되고 있으니, 그걸 한 줄로 접어 클립보드에 올리면
+        /// 그대로 남에게 보낼 수 있습니다. 마음에 드는 조합을 찾았을 때 스크린샷 말고
+        /// 값을 그대로 건넬 방법이 필요합니다.
+        /// </summary>
+        private void BuildShareRow(Transform parent)
+        {
+            var row = MakeRect("ShareRow", parent);
+            SetHeight(row, 38f);
+
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+
+            MakeButton(row, L.Share.Copy, 0f, CopyProfileToClipboard, ButtonColor);
+            MakeButton(row, L.Share.Paste, 0f, PasteProfileFromClipboard, ButtonColor);
         }
 
         /// <summary>

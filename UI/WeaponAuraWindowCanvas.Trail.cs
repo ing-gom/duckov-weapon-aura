@@ -94,7 +94,10 @@ namespace WeaponAura.UI
             row.childForceExpandHeight = true;
 
             BuildTrailLeftColumn(body);
-            BuildTrailControls(BuildScrollColumn(body));
+            _trailSections = BuildSectionedColumn(body);
+            BuildTrailControls(_trailSections.Basic.transform);
+            BuildTrailAdvanced(_trailSections.Advanced.transform);
+            _trailSections.Select(false);
 
             // 처음에는 무기 오라 탭이 보입니다. SelectTab이 다시 정리합니다.
             body.gameObject.SetActive(false);
@@ -221,6 +224,15 @@ namespace WeaponAura.UI
                 p => p.length, (p, v) => p.length = v);
             AddTrailSlider(parent, L.Trail.FieldStartWidth, 0.005f, 0.2f, "0.000",
                 p => p.startWidth, (p, v) => p.startWidth = v);
+        }
+
+        /// <summary>
+        /// 탄환 잔상의 고급 항목 — 꼬리 굵기 · 투명도 · 밝기 · 발광.
+        /// 색과 길이만 맞추려는 사람은 기본 쪽만 보면 됩니다.
+        /// </summary>
+        private void BuildTrailAdvanced(Transform parent)
+        {
+            AddSectionLabel(parent, L.Trail.SectionShape);
             AddTrailSlider(parent, L.Trail.FieldEndWidth, 0f, 0.1f, "0.000",
                 p => p.endWidth, (p, v) => p.endWidth = v);
             AddTrailSlider(parent, L.Trail.FieldAlpha, 0f, 1f, "0.00",

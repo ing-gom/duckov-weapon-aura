@@ -75,7 +75,10 @@ namespace WeaponAura.UI
             row.childForceExpandHeight = true;
 
             BuildMeleeLeftColumn(body);
-            BuildMeleeControls(BuildScrollColumn(body));
+            _meleeSections = BuildSectionedColumn(body);
+            BuildMeleeControls(_meleeSections.Basic.transform);
+            BuildMeleeAdvanced(_meleeSections.Advanced.transform);
+            _meleeSections.Select(false);
 
             body.gameObject.SetActive(false);
         }
@@ -186,6 +189,14 @@ namespace WeaponAura.UI
                 HighlightMeleeGradeButton();
             });
 
+        }
+
+        /// <summary>
+        /// 근접 참격의 고급 항목 — 흩날리는 알갱이 전부와 직접 그린 도형.
+        /// 참격 색과 모양만 바꾸려는 사람은 기본 쪽만 보면 됩니다.
+        /// </summary>
+        private void BuildMeleeAdvanced(Transform parent)
+        {
             AddSectionLabel(parent, L.Melee.SectionColorInner);
             _meleePickerInner = AddColorPicker(parent, color =>
             {

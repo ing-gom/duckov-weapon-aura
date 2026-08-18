@@ -97,10 +97,17 @@ namespace WeaponAura.UI
         private readonly List<SliderRow> _rows = new List<SliderRow>();
 
         private TextMeshProUGUI? _auraTextureLabel;
+        private TextMeshProUGUI? _ringTextureLabel;
 
         private ColorPickerControl? _pickerA;
         private ColorPickerControl? _pickerB;
 
+        private SectionSwitch? _auraSections;
+        private SectionSwitch? _trailSections;
+        private SectionSwitch? _muzzleSections;
+        private SectionSwitch? _meleeSections;
+
+        private Button? _ringButton;
         private Button? _toggleButton;
         private Button? _trailButton;
         private Button? _worldTrailButton;

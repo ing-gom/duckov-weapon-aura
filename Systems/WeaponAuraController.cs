@@ -13,6 +13,9 @@ namespace WeaponAura.Systems
     /// </summary>
     public class WeaponAuraController : MonoBehaviour
     {
+        /// <summary>링 한 주기(초). 수명과 같게 두어 끊김 없이 이어지게 합니다.</summary>
+        private const float RingCycle = 4f;
+
         private ParticleSystem? _wrap;
         private ParticleSystem? _ring;
         private readonly List<WeaponAuraSheet> _sheets = new List<WeaponAuraSheet>();
@@ -639,7 +642,13 @@ namespace WeaponAura.Systems
                 ? Mathf.Sin(Time.time * _profile.ringBobSpeed) * _profile.ringBob
                 : 0f;
 
-            _ringTransform.localRotation = Quaternion.Euler(_profile.ringTilt, _ringYaw, 0f);
+            // 링은 <b>바닥에 눕는 고리</b>가 기본입니다.
+            //
+            // ParticleSystemShapeType.Circle은 이미터의 XY 평면에 뿌립니다. 그대로 두면 고리가
+            // 세로로 서고, 덕코프는 탑다운이라 위에서 보면 선 하나로 보입니다("링이 잘 안 보인다").
+            // X를 90도 먼저 눕혀 두고, 기울기는 그 수평면에서 얼마나 기울일지로 씁니다.
+            _ringTransform.localRotation =
+                Quaternion.Euler(90f + _profile.ringTilt, _ringYaw, _profile.ringRoll);
             _ringTransform.localPosition = _ringBasePosition + Vector3.up * bob;
         }
 
@@ -718,7 +727,16 @@ namespace WeaponAura.Systems
             var main = ps.main;
             main.simulationSpace = ParticleSystemSimulationSpace.Local;
             main.scalingMode = ParticleSystemScalingMode.Hierarchy;
-            main.startLifetime = Mathf.Infinity;
+            // 수명을 무한으로 두면 안 됩니다.
+            //
+            // 유니티는 파티클 수명으로 렌더 바운즈를 잡는데, 무한이 섞이면 그 계산이
+            // 무한/NaN이 되어 렌더러가 통째로 컬링됩니다 — 알갱이는 살아 있는데 화면에
+            // 아무것도 안 그려집니다. 링이 안 보이던 원인입니다.
+            //
+            // 대신 한 주기와 수명을 같게 잡습니다. 주기가 끝나는 순간 옛 알갱이가 죽고
+            // 같은 자리에 새로 나므로 끊김 없이 이어집니다(색 곡선은 꺼 두었습니다).
+            main.duration = RingCycle;
+            main.startLifetime = RingCycle;
             main.startSpeed = 0f;
             main.loop = true;
             // 설정 창은 게임이 멈춘 상태에서 열리므로 미리보기는 unscaled 시간이 필요합니다.
@@ -737,8 +755,11 @@ namespace WeaponAura.Systems
             shape.enabled = true;
             shape.shapeType = ParticleSystemShapeType.Circle;
             shape.arc = 360f;
-            shape.arcMode = ParticleSystemShapeMultiModeValue.Loop;
-            shape.arcSpread = _profile.ringCount > 0 ? 1f / _profile.ringCount : 0f;
+            // BurstSpread는 <b>한 번의 버스트</b>를 호 전체에 고르게 흩뿌립니다.
+            // Loop는 시간이 지나며 방출 지점이 도는 방식이라, 한 번에 터뜨리는 우리 방식과
+            // 맞지 않아 광점이 한자리에 겹칠 수 있습니다.
+            shape.arcMode = ParticleSystemShapeMultiModeValue.BurstSpread;
+            shape.arcSpread = 0f;
             shape.radiusThickness = 0f;
             shape.alignToDirection = false;
 
@@ -1088,14 +1109,18 @@ namespace WeaponAura.Systems
             shape.radius = Mathf.Max(0.01f, _profile.ringRadius);
 
             ApplyFlipbook(_ring);
-            ConfigureRenderer(_ring.GetComponent<ParticleSystemRenderer>(), _profile);
+            ConfigureRenderer(_ring.GetComponent<ParticleSystemRenderer>(), _profile, _profile.ringTexture);
         }
 
         // ──────────────────────────────────────────────────────────
         // 리소스
         // ──────────────────────────────────────────────────────────
 
-        private static void ConfigureRenderer(ParticleSystemRenderer? renderer, WeaponAuraProfile? profile)
+        /// <param name="textureOverride">
+        /// 비어 있지 않으면 이 그림을 씁니다. 링은 오라와 다른 문양을 돌릴 수 있어야 합니다.
+        /// </param>
+        private static void ConfigureRenderer(ParticleSystemRenderer? renderer, WeaponAuraProfile? profile,
+            string? textureOverride = null)
         {
             if (renderer == null)
                 return;
@@ -1119,15 +1144,27 @@ namespace WeaponAura.Systems
                 renderer.alignment = ParticleSystemRenderSpace.View;
             }
 
-            var material = WeaponAuraResources.GetMaterial(profile?.textureName);
+            string texture = !string.IsNullOrEmpty(textureOverride)
+                ? textureOverride!
+                : profile?.textureName ?? "";
+
+            var material = WeaponAuraResources.GetMaterial(texture);
             renderer.material = material;
             renderer.trailMaterial = material;
 
             renderer.sortingFudge = -1f;
             renderer.minParticleSize = 0f;
+
             // 뷰포트 높이 대비 상한. 기본 0.5는 화면 절반까지 허용해서, 크기 계산이 어긋나면
-            // 파티클 하나가 화면을 덮어버립니다. 무기 이펙트에 그만한 크기는 필요 없습니다.
-            renderer.maxParticleSize = 0.06f;
+            // 파티클 하나가 화면을 덮어버립니다. 그래서 상한을 두긴 하는데, 0.06은 너무
+            // 좁았습니다.
+            //
+            // 이건 <b>화면 비율</b> 기준이라 보는 거리에 따라 걸리는 시점이 달라집니다.
+            // 미리보기는 무기를 2m 시야로 당겨 보기 때문에 1m짜리 알갱이가 곧바로 이 상한에
+            // 걸리는데, 인게임 탑다운 화면에서는 같은 알갱이가 화면의 몇 %라 안 걸립니다.
+            // 그래서 같은 설정인데 미리보기만 작게 보였습니다. 크기 슬라이더도 상한이 걸린
+            // 구간에서는 올려도 아무 변화가 없습니다.
+            renderer.maxParticleSize = 0.25f;
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
             renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;

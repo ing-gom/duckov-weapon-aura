@@ -297,6 +297,16 @@ public static class LK
         /// <summary>오라 면에 씌우는 그림</summary>
         public const string Texture = "section_texture";
         public const string TextureDefault = "section_texture_default";
+
+        /// <summary>오라 탭 안쪽 구분 (기본 / 고급)</summary>
+        public const string Basic = "section_basic";
+        public const string Advanced = "section_advanced";
+
+        public const string Surface = "section_surface";
+        public const string Motion = "section_motion";
+        public const string Flipbook = "section_flipbook";
+        public const string Ring = "section_ring";
+        public const string Share = "section_share";
     }
 
     /// <summary>속성 템플릿 12종의 이름</summary>
@@ -340,6 +350,29 @@ public static class LK
         public const string TrailOff = "field_trail_off";
         public const string TrailLength = "field_trail_length";
         public const string TrailWidth = "field_trail_width";
+
+        // ── 고급 ──
+        public const string Roundness = "field_roundness";
+        public const string Boxiness = "field_boxiness";
+        public const string NoiseStrength = "field_noise_strength";
+        public const string NoiseFrequency = "field_noise_frequency";
+        public const string RotationSpeed = "field_rotation_speed";
+        public const string Drag = "field_drag";
+        public const string TilesX = "field_tiles_x";
+        public const string TilesY = "field_tiles_y";
+        public const string FlipbookFps = "field_flipbook_fps";
+
+        public const string RingOn = "field_ring_on";
+        public const string RingOff = "field_ring_off";
+        public const string RingCount = "field_ring_count";
+        public const string RingRadius = "field_ring_radius";
+        public const string RingSize = "field_ring_size";
+        public const string RingSpeed = "field_ring_speed";
+        public const string RingTilt = "field_ring_tilt";
+        public const string RingRoll = "field_ring_roll";
+        public const string RingTexture = "field_ring_texture";
+        public const string RingTextureSame = "field_ring_texture_same";
+        public const string RingBob = "field_ring_bob";
     }
 
     public static class Display
@@ -354,6 +387,17 @@ public static class LK
         public const string Subtle = "display_subtle";
         public const string Normal = "display_normal";
         public const string Intense = "display_intense";
+    }
+
+    /// <summary>설정을 문자열로 주고받기</summary>
+    public static class Share
+    {
+        public const string Copy = "share_copy";
+        public const string Paste = "share_paste";
+        public const string Copied = "share_copied";
+        public const string Pasted = "share_pasted";
+        public const string NotFound = "share_not_found";
+        public const string Failed = "share_failed";
     }
 
     public static class Action

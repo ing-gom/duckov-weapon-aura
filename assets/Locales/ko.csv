@@ -244,3 +244,36 @@ section_texture,모양 그림
 section_texture_default,기본 (그림 없음)
 field_world_trail_on,지나간 자리에 남기기
 field_world_trail_off,무기를 따라오게
+section_basic,기본
+section_advanced,고급
+section_surface,표면과 노이즈
+section_motion,움직임과 잔상
+section_flipbook,플립북 (여러 칸 시트)
+section_ring,링 (무기를 도는 광점)
+section_share,설정 주고받기
+field_roundness,둥글기
+field_boxiness,각짐
+field_noise_strength,노이즈 세기
+field_noise_frequency,노이즈 주기
+field_rotation_speed,회전 속도
+field_drag,감속
+field_tiles_x,가로 칸
+field_tiles_y,세로 칸
+field_flipbook_fps,재생 속도(0=수명)
+field_ring_on,링 켜기
+field_ring_off,링 끄기
+field_ring_count,링 개수
+field_ring_radius,링 반지름
+field_ring_size,링 입자 크기
+field_ring_speed,링 회전 속도
+field_ring_tilt,링 기울기
+field_ring_bob,링 상하 흔들림
+share_copy,이 등급 설정 복사
+share_paste,붙여넣기로 적용
+share_copied,등급 {0} 설정을 클립보드에 복사했습니다 ({1}자).
+share_pasted,등급 {0}에 붙여넣은 설정을 적용했습니다.
+share_not_found,클립보드에 오라 설정이 없습니다.
+share_failed,설정을 읽지 못했습니다.
+field_ring_roll,링 회전축
+field_ring_texture,링 문양
+field_ring_texture_same,오라와 같게

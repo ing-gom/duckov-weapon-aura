@@ -11,6 +11,8 @@ An aura **spreads outward from your weapon's surface.** It's not a cloud of part
 - **12 elemental templates** — Aurora / Fire / Frost / Toxic / Void / Shock / Holy / Blood / Arcane / Plasma / Nature / Shadow. One click swaps the whole look and motion.
 - **Shell, waves, particles** — layer count, spread distance, concentric waves, surface particle rate/size/life, and trailing tails.
 - **Leave a trail behind** — particles stay where they were born instead of following the weapon, so moving lays a pattern along your path. Turn it off to keep the aura hugging the weapon.
+- **Ring** — glowing dots orbiting the weapon. Set count, radius, size, spin and tilt, and give them a <b>different shape</b> from the aura (hearts, stars, …).
+- **Flipbook** — plays a tiled sheet frame by frame. Drop a 4×4 sheet into `assets/vfx_textures` and set the tile counts.
 - **Global strength** — subtle / normal / intense.
 
 ## Bullet Trails — by ammo grade
@@ -49,6 +51,8 @@ Opens from the `Aura Settings` button in the pause menu, built with the game's o
 - **Color picker** — grab a color from the saturation/value square and hue bar, or type an exact value as HEX (`#FF8800`) or R/G/B.
 - **Per-grade on/off** — silence a whole grade when you don't want the effect on low-grade gear.
 - **Draw your own shape** — a grid pad sits in the Weapon Aura, Muzzle Flash and Melee Slash tabs. Paint one, save it, and it becomes selectable in all three. (Bullet Trails don't use shapes.)
+- **Basic / Advanced** — every tab splits the values you reach for often from the ones that fine-tune character. Start with Basic.
+- **Share settings** — copies the grade you are editing to the clipboard as one line. Paste it back to apply.
 - **Random generator** — rolls colour *and* shape in one click. It's seeded, so note the seed down when you get a combination you like.
 
 ## How to use

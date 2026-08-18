@@ -94,7 +94,10 @@ namespace WeaponAura.UI
             row.childForceExpandHeight = true;
 
             BuildMuzzleLeftColumn(body);
-            BuildMuzzleControls(BuildScrollColumn(body));
+            _muzzleSections = BuildSectionedColumn(body);
+            BuildMuzzleControls(_muzzleSections.Basic.transform);
+            BuildMuzzleAdvanced(_muzzleSections.Advanced.transform);
+            _muzzleSections.Select(false);
 
             body.gameObject.SetActive(false);
         }
@@ -237,6 +240,14 @@ namespace WeaponAura.UI
             AddMuzzleSlider(parent, L.Muzzle.FieldIntensity, 0.5f, 3f, "0.00",
                 p => p.intensity, (p, v) => p.intensity = v);
 
+        }
+
+        /// <summary>
+        /// 총구 화염의 고급 항목 — 앞으로 튀는 불꽃과 직접 그린 도형.
+        /// 색과 크기만 맞추려는 사람은 여기까지 올 이유가 없습니다.
+        /// </summary>
+        private void BuildMuzzleAdvanced(Transform parent)
+        {
             AddSectionLabel(parent, L.Muzzle.SectionSparks);
             AddMuzzleSlider(parent, L.Muzzle.FieldSparkCount, 0f, 20f, "0",
                 p => p.sparkCount, (p, v) => p.sparkCount = Mathf.RoundToInt(v));

@@ -50,6 +50,21 @@ namespace WeaponAura.UI
         private Bounds _bounds;
         private int _builtLayers;
 
+        /// <summary>구조가 바뀌어 무대를 다시 세워야 하는지.</summary>
+        private bool _rebuildRequested;
+
+        /// <summary>
+        /// 다음 프레임에 무대를 다시 세웁니다.
+        ///
+        /// 링·플립북처럼 <b>만들 때 한 번만</b> 반영되는 값이 있습니다. 예전에는 겹 수만
+        /// 지켜보다가, 링을 켜도 미리보기가 그대로였습니다(게임 쪽은 RebuildNow로 다시
+        /// 만들어져서 나오는데 미리보기만 안 나옴). 구조가 바뀌는 편집은 전부 여기로 옵니다.
+        /// </summary>
+        public void RequestRebuild()
+        {
+            _rebuildRequested = true;
+        }
+
         public float Yaw { get; private set; } = 35f;
         public float Pitch { get; private set; } = 14f;
         /// <summary>
@@ -112,8 +127,10 @@ namespace WeaponAura.UI
 
                 // 겹 수는 껍질 개수라서 슬라이더로 바뀌면 무대를 다시 세워야 합니다.
                 // 다음 프레임에 EnsureStage가 새로 만듭니다.
-                if (_controller != null && _builtLayers != Mathf.Max(1, profile.sheetLayers))
+                if (_controller != null &&
+                    (_rebuildRequested || _builtLayers != Mathf.Max(1, profile.sheetLayers)))
                 {
+                    _rebuildRequested = false;
                     DestroyStage();
                     return null;
                 }
