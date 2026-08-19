@@ -95,19 +95,57 @@ trail_off_notice,탄환 잔상이 꺼져 있습니다
 trail_scope,적용 대상
 trail_scope_player,내 총알
 trail_scope_everyone,모든 총알
+trail_hide_vanilla_on,게임 기본 궤적 숨기기
+trail_hide_vanilla_off,게임 기본 궤적 보이기
 trail_grade_on,이 등급 잔상 켜기
 trail_grade_off,이 등급 잔상 끄기
 trail_grade_disabled_notice,이 등급 탄환에는 잔상이 그려지지 않습니다
-trail_section_color_head,머리 색 (총알 쪽)
-trail_section_color_tail,꼬리 색 (사라지는 쪽)
-trail_section_shape,모양
-trail_field_length,잔상 길이
-trail_field_start_width,머리 굵기
-trail_field_end_width,꼬리 굵기
-trail_field_alpha,투명도
-trail_field_intensity,밝기
-trail_glow_on,발광 켜기
-trail_glow_off,발광 끄기
+trail_section_color_head,잔상 색 — 앞쪽 (총알 쪽)
+trail_section_color_tail,잔상 색 — 뒤쪽 (사라지는 쪽)
+trail_section_shape,잔상 모양
+trail_style_line,잔상 방식: 선
+trail_style_stamp,잔상 방식: 자국
+trail_section_stamp,자국 (잔상 방식: 자국)
+trail_field_stamp_shape,자국 · 모양
+trail_field_stamp_rate,자국 · 1m당 개수
+trail_field_stamp_size,자국 · 크기
+trail_field_stamp_life,자국 · 지속시간
+trail_apply_shape_head,머리 모양으로 쓰기
+trail_apply_shape_stamp,자국 모양으로 쓰기
+trail_field_length,잔상 · 길이
+trail_field_start_width,잔상 · 앞 굵기
+trail_field_end_width,잔상 · 뒤 굵기
+trail_field_alpha,잔상 · 투명도
+trail_field_intensity,잔상 · 밝기
+trail_glow_on,잔상 발광: 꺼짐 → 켜기
+trail_glow_off,잔상 발광: 켜짐 → 끄기
+trail_section_head,총알 머리 (모드가 그림)
+trail_head_inactive,적용 안 됨 — 위의 [게임 기본 궤적 숨기기]를 켜세요
+trail_head_turn_on,지금 켜기
+trail_section_glow,총알 발광체 (게임 원본 빛)
+trail_glow_active,적용 중 — 배율 1 = 원본 그대로
+trail_glow_inactive,적용 안 됨 — 발광체 조절을 켜세요
+trail_glow_turn_on,지금 켜기
+trail_glow_show,발광체: 보임 → 숨기기
+trail_glow_hide,발광체: 숨김 → 보이기
+trail_field_glow_scale,발광체 · 크기
+trail_field_glow_intensity,발광체 · 밝기
+trail_glow_color_vanilla,발광체 색: 원본 그대로
+trail_glow_color_follow_trail,발광체 색: 잔상 따라가기
+trail_glow_color_custom,발광체 색: 따로 고른 색
+trail_head_active,적용 중 — 총알 머리를 모드가 그립니다
+trail_field_head_width,머리 · 굵기
+trail_field_head_aspect,머리 · 길이 비율
+trail_field_head_intensity,머리 · 밝기
+trail_field_head_shape,머리 · 모양
+trail_head_color_follow,잔상 색 따라가기
+trail_head_color_separate,머리 색 따로 쓰기
+trail_head_shape_capsule,캡슐 (원본과 비슷)
+trail_head_shape_dot,점
+trail_head_shape_diamond,마름모
+trail_head_shape_arrow,화살촉
+trail_head_shape_ring,고리
+trail_head_shape_spark,반짝임
 trail_random_applied,등급 {0} 잔상에 랜덤 조합을 적용했습니다 (시드 {1}).
 trail_reset_done,탄환 잔상을 기본값으로 되돌렸습니다
 window_title_muzzle,총구 화염 — 등급 {0} {1}

@@ -18,6 +18,11 @@ namespace WeaponAura
     {
         private void Awake()
         {
+            // 씬이 바뀌면 BulletPool이 총알 인스턴스를 통째로 새로 만듭니다. 지난 판에
+            // 꺼 둔 궤적 기록을 들고 있어 봐야 파괴된 참조만 쌓입니다.
+            VanillaTrailSuppressor.RestoreAll();
+            BulletGlowController.RestoreAll();
+
             // 씬이 바뀔 때마다 다시 로드되도록 Awake에서 읽습니다.
             AuraSettings.Load();
             BulletTrailSettings.Load();
@@ -107,6 +112,8 @@ namespace WeaponAura
 
             Step("오라 정리", WeaponAuraSystem.Clear);
             Step("탄환 잔상 패치 해제", BulletTrailPatch.RemovePatches);
+            Step("원본 궤적 복원", VanillaTrailSuppressor.RestoreAll);
+            Step("발광체 복원", BulletGlowController.RestoreAll);
             Step("탄환 잔상 정리", BulletTrailSystem.Dispose);
             Step("총구 화염 패치 해제", MuzzleFlashPatch.RemovePatches);
             Step("총구 화염 정리", MuzzleFlashSystem.Dispose);
@@ -210,6 +217,17 @@ namespace WeaponAura
         {
             if (!BulletTrailSettings.Enabled)
                 BulletTrailSystem.Clear();
+
+            // 원본 궤적 숨기기를 끄면 곧바로 되돌립니다. 총알은 풀에서 재사용되므로
+            // 여기서 안 켜면 그 판이 끝날 때까지 원본 궤적이 돌아오지 않습니다.
+            // 잔상 자체를 끈 경우도 마찬가지 — 아무 궤적도 안 보이면 안 됩니다.
+            if (!BulletTrailSettings.HideVanillaTrail || !BulletTrailSettings.Enabled)
+                VanillaTrailSuppressor.RestoreAll();
+
+            // 발광체도 같은 이유로 즉시 되돌립니다. 총알이 풀에서 재사용되므로
+            // 여기서 안 되돌리면 그 판이 끝날 때까지 칠해진 채로 남습니다.
+            if (!BulletTrailSettings.CustomizeGlow || !BulletTrailSettings.Enabled)
+                BulletGlowController.RestoreAll();
         }
 
         /// <summary>총구 화염을 끄면 지금 떠 있는 화염도 바로 걷어냅니다.</summary>

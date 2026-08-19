@@ -95,19 +95,57 @@ trail_off_notice,子彈拖尾已關閉
 trail_scope,套用對象
 trail_scope_player,我的子彈
 trail_scope_everyone,所有子彈
+trail_hide_vanilla_on,隱藏遊戲原版彈道
+trail_hide_vanilla_off,顯示遊戲原版彈道
 trail_grade_on,開啟該品質拖尾
 trail_grade_off,關閉該品質拖尾
 trail_grade_disabled_notice,該品質子彈不會繪製拖尾
-trail_section_color_head,頭部顏色（子彈側）
-trail_section_color_tail,尾部顏色（消散側）
-trail_section_shape,形狀
-trail_field_length,拖尾長度
-trail_field_start_width,頭部粗細
-trail_field_end_width,尾部粗細
-trail_field_alpha,不透明度
-trail_field_intensity,亮度
-trail_glow_on,開啟發光
-trail_glow_off,關閉發光
+trail_section_color_head,拖尾顏色 — 前端（子彈側）
+trail_section_color_tail,拖尾顏色 — 後端（消散側）
+trail_section_shape,拖尾形狀
+trail_style_line,拖尾方式：線條
+trail_style_stamp,拖尾方式：印記
+trail_section_stamp,印記（拖尾方式：印記）
+trail_field_stamp_shape,印記 · 形狀
+trail_field_stamp_rate,印記 · 每米數量
+trail_field_stamp_size,印記 · 大小
+trail_field_stamp_life,印記 · 持續時間
+trail_apply_shape_head,用作頭部形狀
+trail_apply_shape_stamp,用作印記形狀
+trail_field_length,拖尾 · 長度
+trail_field_start_width,拖尾 · 前端粗細
+trail_field_end_width,拖尾 · 後端粗細
+trail_field_alpha,拖尾 · 透明度
+trail_field_intensity,拖尾 · 亮度
+trail_glow_on,拖尾發光：關 → 開啟
+trail_glow_off,拖尾發光：開 → 關閉
+trail_section_head,子彈頭部（由模組繪製）
+trail_head_inactive,未生效 — 請開啟上方的［隱藏遊戲原版彈道］
+trail_head_turn_on,立即開啟
+trail_section_glow,子彈發光體（遊戲原版光）
+trail_glow_active,生效中 — 倍率 1 = 原版
+trail_glow_inactive,未生效 — 請開啟發光體調節
+trail_glow_turn_on,立即開啟
+trail_glow_show,發光體：顯示 → 隱藏
+trail_glow_hide,發光體：隱藏 → 顯示
+trail_field_glow_scale,發光體 · 大小
+trail_field_glow_intensity,發光體 · 亮度
+trail_glow_color_vanilla,發光體顏色：原版
+trail_glow_color_follow_trail,發光體顏色：跟隨拖尾
+trail_glow_color_custom,發光體顏色：自訂
+trail_head_active,生效中 — 子彈頭部由模組繪製
+trail_field_head_width,頭部 · 粗細
+trail_field_head_aspect,頭部 · 長寬比
+trail_field_head_intensity,頭部 · 亮度
+trail_field_head_shape,頭部 · 形狀
+trail_head_color_follow,跟隨拖尾顏色
+trail_head_color_separate,單獨設定頭部顏色
+trail_head_shape_capsule,膠囊（接近原版）
+trail_head_shape_dot,圓點
+trail_head_shape_diamond,菱形
+trail_head_shape_arrow,箭頭
+trail_head_shape_ring,圓環
+trail_head_shape_spark,閃光
 trail_random_applied,已為品質 {0} 的拖尾套用隨機效果（種子 {1}）。
 trail_reset_done,子彈拖尾已恢復預設值
 window_title_muzzle,槍口火焰 — 品質 {0} {1}

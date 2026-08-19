@@ -62,6 +62,8 @@ namespace WeaponAura.UI
         private static readonly Color SectionColor = new Color(0.11f, 0.22f, 0.31f, 0.95f);
         private static readonly Color TextColor = new Color(0.95f, 0.95f, 0.95f, 1f);
         private static readonly Color DimTextColor = new Color(0.72f, 0.80f, 0.86f, 1f);
+        /// <summary>"지금은 적용되지 않습니다" 같은 조건 안내용. 어두운 청록 배경에서 눈에 걸리는 호박색.</summary>
+        private static readonly Color WarnTextColor = new Color(1f, 0.78f, 0.35f, 1f);
         private static readonly Color ButtonColor = new Color(0.16f, 0.30f, 0.42f, 0.95f);
         private static readonly Color ButtonAccentColor = new Color(0.20f, 0.45f, 0.62f, 0.95f);
 

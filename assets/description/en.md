@@ -19,9 +19,12 @@ An aura **spreads outward from your weapon's surface.** It's not a cloud of part
 
 Every shot leaves a **coloured tail matched to the grade of the ammo you have loaded.** Weapon grade and ammo grade are separate axes, so your gun and your bullets can run different colours.
 
-- **Colour and shape per grade** — head colour, tail colour, trail length, head and tail width, opacity, brightness, glow.
-- **Animated preview** — watch a single bullet fly past with your settings. The time axis matches the real thing, so you can see exactly how far `length 0.3s` reaches.
-- **Applies to** — your shots only, or everyone's.
+- **Colour and shape per grade** — head colour, tail colour, trail length, front/back width, opacity, brightness, glow.
+- **Trail style** — a continuous `line`, or `stamps` that drop a shape at a fixed spacing along the path. Stamps have per-metre count, size and lifetime.
+- **Bullet head** — hide the game's own trail and let the mod draw the bullet itself. Pick its shape (capsule, dot, diamond, arrow, ring, spark, or one you drew), width, length ratio, brightness and colour.
+- **Bullet glow** — resize, brighten, recolour or hide the light that follows the bullet. Everything defaults to `vanilla`, so turning it on changes nothing until you move a slider.
+- **Live preview** — watch a single bullet fly past. Head shape, glow and stamps are all drawn with the same maths the game uses.
+- **Applies to** — my shots only / everyone.
 
 ## Muzzle Flash — by ammo grade
 

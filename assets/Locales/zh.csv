@@ -95,19 +95,57 @@ trail_off_notice,子弹拖尾已关闭
 trail_scope,应用对象
 trail_scope_player,我的子弹
 trail_scope_everyone,所有子弹
+trail_hide_vanilla_on,隐藏游戏原版弹道
+trail_hide_vanilla_off,显示游戏原版弹道
 trail_grade_on,开启该品质拖尾
 trail_grade_off,关闭该品质拖尾
 trail_grade_disabled_notice,该品质子弹不会绘制拖尾
-trail_section_color_head,头部颜色（子弹侧）
-trail_section_color_tail,尾部颜色（消散侧）
-trail_section_shape,形状
-trail_field_length,拖尾长度
-trail_field_start_width,头部粗细
-trail_field_end_width,尾部粗细
-trail_field_alpha,不透明度
-trail_field_intensity,亮度
-trail_glow_on,开启发光
-trail_glow_off,关闭发光
+trail_section_color_head,拖尾颜色 — 前端（子弹侧）
+trail_section_color_tail,拖尾颜色 — 后端（消散侧）
+trail_section_shape,拖尾形状
+trail_style_line,拖尾方式：线条
+trail_style_stamp,拖尾方式：印记
+trail_section_stamp,印记（拖尾方式：印记）
+trail_field_stamp_shape,印记 · 形状
+trail_field_stamp_rate,印记 · 每米数量
+trail_field_stamp_size,印记 · 大小
+trail_field_stamp_life,印记 · 持续时间
+trail_apply_shape_head,用作头部形状
+trail_apply_shape_stamp,用作印记形状
+trail_field_length,拖尾 · 长度
+trail_field_start_width,拖尾 · 前端粗细
+trail_field_end_width,拖尾 · 后端粗细
+trail_field_alpha,拖尾 · 透明度
+trail_field_intensity,拖尾 · 亮度
+trail_glow_on,拖尾发光：关 → 开启
+trail_glow_off,拖尾发光：开 → 关闭
+trail_section_head,子弹头部（由模组绘制）
+trail_head_inactive,未生效 — 请开启上方的［隐藏游戏原版弹道］
+trail_head_turn_on,立即开启
+trail_section_glow,子弹发光体（游戏原版光）
+trail_glow_active,生效中 — 倍率 1 = 原版
+trail_glow_inactive,未生效 — 请开启发光体调节
+trail_glow_turn_on,立即开启
+trail_glow_show,发光体：显示 → 隐藏
+trail_glow_hide,发光体：隐藏 → 显示
+trail_field_glow_scale,发光体 · 大小
+trail_field_glow_intensity,发光体 · 亮度
+trail_glow_color_vanilla,发光体颜色：原版
+trail_glow_color_follow_trail,发光体颜色：跟随拖尾
+trail_glow_color_custom,发光体颜色：自定义
+trail_head_active,生效中 — 子弹头部由模组绘制
+trail_field_head_width,头部 · 粗细
+trail_field_head_aspect,头部 · 长宽比
+trail_field_head_intensity,头部 · 亮度
+trail_field_head_shape,头部 · 形状
+trail_head_color_follow,跟随拖尾颜色
+trail_head_color_separate,单独设置头部颜色
+trail_head_shape_capsule,胶囊（接近原版）
+trail_head_shape_dot,圆点
+trail_head_shape_diamond,菱形
+trail_head_shape_arrow,箭头
+trail_head_shape_ring,圆环
+trail_head_shape_spark,闪光
 trail_random_applied,已为品质 {0} 的拖尾应用随机效果（种子 {1}）。
 trail_reset_done,子弹拖尾已恢复默认值
 window_title_muzzle,枪口火焰 — 品质 {0} {1}

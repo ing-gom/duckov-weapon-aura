@@ -25,6 +25,14 @@ namespace WeaponAura.Systems
 
         private const string HolderName = "WeaponAura_BulletTrails";
         private const string TrailName = "WeaponAura_BulletTrail";
+        private const string HeadName = "WeaponAura_BulletHead";
+        private const string StampName = "WeaponAura_BulletStamps";
+
+        /// <summary>자국 하나가 남길 수 있는 최대 개수. 연사 무기가 화면을 덮는 것을 막습니다.</summary>
+        private const int MaxStampsPerBullet = 64;
+
+        /// <summary>1m당 자국 수 상한. 총알이 길게 날아가도 총량이 터지지 않게 잡아 둡니다.</summary>
+        private const float MaxStampRate = 20f;
 
         /// <summary>상태 표시용 폴링 간격(초)</summary>
         private const float StatusInterval = 0.25f;
@@ -33,6 +41,33 @@ namespace WeaponAura.Systems
         {
             public GameObject Go = null!;
             public TrailRenderer Trail = null!;
+
+            /// <summary>
+            /// 총알 머리. 원본 궤적을 숨겼을 때만 켭니다.
+            ///
+            /// <b>궤적이 아니라 판입니다.</b> 처음에는 아주 짧은 TrailRenderer로 그렸는데,
+            /// 궤적은 길이가 <c>시간 × 총알 속도</c>로 정해집니다. 0.04초라도 총알이 워낙
+            /// 빨라서 실제로는 굵기의 열 배가 넘는 띠가 되고, 텍스처가 그만큼 늘어나
+            /// 마름모든 고리든 전부 같은 바늘 모양이 됐습니다.
+            ///
+            /// 그래서 가로세로비가 고정된 판에 도형을 찍고, 매 프레임 카메라를 향해
+            /// 눕히면서 긴 쪽을 진행 방향에 맞춥니다.
+            /// </summary>
+            public GameObject HeadGo = null!;
+            public MeshRenderer HeadRenderer = null!;
+
+            /// <summary>머리 판의 월드 크기(m). 매 프레임 방향을 맞출 때 같이 씁니다.</summary>
+            public float HeadLength;
+            public float HeadWidth;
+
+            /// <summary>
+            /// 지나간 자리에 도형을 남기는 자국. 선 방식일 때는 꺼 둡니다.
+            ///
+            /// 이동 거리 기준으로 뿌립니다(<c>rateOverDistance</c>). 시간 기준이면 빠른
+            /// 총알은 자국이 뜨문뜨문하고 느린 총알은 뭉칩니다.
+            /// </summary>
+            public ParticleSystem Stamps = null!;
+            public ParticleSystemRenderer StampRenderer = null!;
 
             /// <summary>따라가는 총알. null이면 사라지는 중입니다.</summary>
             public Projectile? Follow;
@@ -79,7 +114,22 @@ namespace WeaponAura.Systems
             {
                 var profile = BulletTrailProfiles.Resolve(ammoQuality);
                 if (profile == null || !profile.enabled)
+                {
+                    // 이 등급은 모드 잔상을 안 그립니다. 원본까지 숨기면 총알이 아무
+                    // 흔적 없이 날아갑니다. (같은 인스턴스가 직전에 숨겨졌을 수 있습니다)
+                    VanillaTrailSuppressor.Restore(projectile);
+                    BulletGlowController.Restore(projectile);
                     return;
+                }
+
+                // 원본 궤적은 모드 잔상이 실제로 대신 그려질 때만 숨깁니다.
+                VanillaTrailSuppressor.SetSuppressed(projectile, BulletTrailSettings.HideVanillaTrail);
+
+                // 발광체는 잔상을 숨기는지와 무관합니다 — 자체 옵션으로만 갈립니다.
+                if (BulletTrailSettings.CustomizeGlow)
+                    BulletGlowController.Apply(projectile, profile);
+                else
+                    BulletGlowController.Restore(projectile);
 
                 // 같은 총알을 풀에서 곧바로 다시 꺼내 쏜 경우, 이전 잔상은 여기서 끊어 줍니다.
                 // (안 그러면 새 총알을 따라가면서 지난 궤적이 이어져 화면을 가로지릅니다)
@@ -102,6 +152,16 @@ namespace WeaponAura.Systems
                 // 위치를 옮긴 뒤에 지워야 이전 궤적이 남지 않습니다.
                 handle.Trail.Clear();
                 handle.Trail.emitting = true;
+
+                if (handle.Stamps != null && handle.StampRenderer != null && handle.StampRenderer.enabled)
+                {
+                    handle.Stamps.Clear();
+                    handle.Stamps.Play();
+                }
+
+                // 판은 궤적처럼 쌓이는 것이 없어서 지울 것도 없습니다.
+                // 방향은 첫 프레임 갱신에서 맞춥니다.
+                UpdateHead(handle, projectile);
 
                 handle.Follow = projectile;
                 handle.RecycleAt = 0f;
@@ -164,6 +224,25 @@ namespace WeaponAura.Systems
                 UnityEngine.Object.Destroy(_holder);
                 _holder = null;
             }
+
+            // 머리 머티리얼·도형 텍스처는 HideAndDontSave라 씬이 바뀌어도 남습니다.
+            // 여기서 안 지우면 모드를 껐다 켤 때마다 도형 수만큼 쌓입니다.
+            foreach (var material in _headMaterials.Values)
+            {
+                if (material != null)
+                    UnityEngine.Object.Destroy(material);
+            }
+
+            _headMaterials.Clear();
+            BulletHeadShapes.Dispose();
+
+            _camera = null;
+
+            if (_headQuad != null)
+            {
+                UnityEngine.Object.Destroy(_headQuad);
+                _headQuad = null;
+            }
         }
 
         // ── 매 프레임 갱신 ────────────────────────────────────────
@@ -198,9 +277,14 @@ namespace WeaponAura.Systems
                     bool alive = projectile != null && projectile.gameObject.activeInHierarchy;
 
                     if (alive)
+                    {
                         handle.Go.transform.position = projectile!.transform.position;
+                        UpdateHead(handle, projectile);
+                    }
                     else
+                    {
                         BeginFade(handle);
+                    }
                 }
 
                 if (ReferenceEquals(handle.Follow, null) && Time.time >= handle.RecycleAt)
@@ -256,6 +340,61 @@ namespace WeaponAura.Systems
             AmmoRevision++;
         }
 
+        private static Camera? _camera;
+
+        /// <summary>
+        /// 머리 판을 그릴 기준 카메라.
+        ///
+        /// <c>Camera.main</c>은 태그 검색이라 매 프레임 부르면 부담이 됩니다. 한 번 찾아
+        /// 두고, 씬이 바뀌어 사라지면 그때 다시 찾습니다.
+        /// </summary>
+        private static Camera? MainCamera()
+        {
+            if (_camera != null)
+                return _camera;
+
+            _camera = Camera.main;
+            return _camera;
+        }
+
+        /// <summary>
+        /// 머리 판을 카메라 쪽으로 눕히고, 긴 쪽을 진행 방향에 맞춥니다.
+        ///
+        /// 판의 로컬 x가 진행 방향, y가 굵기 방향입니다(<see cref="HeadQuad"/>).
+        /// 진행 방향을 카메라 평면에 투영해서 x로 삼으면, 총알이 화면 어느 쪽으로 날아가든
+        /// 도형이 찌그러지지 않고 방향만 따라 돕니다.
+        /// </summary>
+        private static void UpdateHead(TrailHandle handle, Projectile projectile)
+        {
+            var head = handle.HeadRenderer;
+            if (head == null || !head.enabled || handle.HeadGo == null)
+                return;
+
+            var camera = MainCamera();
+            if (camera == null)
+                return;
+
+            // 판이 바라볼 방향 = 카메라 쪽
+            Vector3 toCamera = -camera.transform.forward;
+
+            Vector3 along = Vector3.ProjectOnPlane(projectile.transform.forward, toCamera);
+
+            // 총알이 카메라를 정면으로 향해 날아오면 투영이 0이 됩니다. 그때는
+            // 방향이랄 것이 없으므로 화면 가로를 씁니다.
+            if (along.sqrMagnitude < 0.000001f)
+                along = camera.transform.right;
+            else
+                along.Normalize();
+
+            // LookRotation(forward, up)은 right = cross(up, forward)로 만듭니다.
+            // up을 이렇게 잡으면 right가 정확히 along이 됩니다.
+            Vector3 up = Vector3.Cross(toCamera, along);
+
+            var t = handle.HeadGo.transform;
+            t.rotation = Quaternion.LookRotation(toCamera, up);
+            t.localScale = new Vector3(handle.HeadLength, handle.HeadWidth, 1f);
+        }
+
         // ── 잔상 풀 ──────────────────────────────────────────────
 
         private static TrailHandle? Rent()
@@ -276,6 +415,135 @@ namespace WeaponAura.Systems
             go.SetActive(false);
 
             var trail = go.AddComponent<TrailRenderer>();
+            SetupTrail(trail);
+            trail.minVertexDistance = 0.02f;
+
+            // 머리는 자식 오브젝트에 답니다. 부모(=총알 위치)를 따라가므로 위치는
+            // 저절로 맞고, 회전만 매 프레임 카메라 쪽으로 돌리면 됩니다.
+            var headGo = new GameObject(HeadName);
+            headGo.transform.SetParent(go.transform, false);
+
+            headGo.AddComponent<MeshFilter>().sharedMesh = HeadQuad;
+
+            var headRenderer = headGo.AddComponent<MeshRenderer>();
+            headRenderer.receiveShadows = false;
+            headRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            headRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+            headRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+
+            // 같은 자리에 겹쳐 그리므로 머리를 위로 올립니다. 가산 합성에서는 순서가
+            // 결과에 영향을 주지 않지만, 일반 알파 합성에서는 꼬리가 머리를 덮습니다.
+            headRenderer.sortingOrder = 1;
+
+            var stampGo = new GameObject(StampName);
+            stampGo.transform.SetParent(go.transform, false);
+
+            var stamps = stampGo.AddComponent<ParticleSystem>();
+            var stampRenderer = stampGo.GetComponent<ParticleSystemRenderer>();
+            SetupStamps(stamps, stampRenderer);
+
+            return new TrailHandle
+            {
+                Go = go,
+                Trail = trail,
+                HeadGo = headGo,
+                HeadRenderer = headRenderer,
+                Stamps = stamps,
+                StampRenderer = stampRenderer,
+            };
+        }
+
+        /// <summary>자국 파티클의 고정 설정. 매 발 바뀌지 않는 것만 여기서 잡습니다.</summary>
+        private static void SetupStamps(ParticleSystem stamps, ParticleSystemRenderer renderer)
+        {
+            var main = stamps.main;
+            main.playOnAwake = false;
+            main.loop = true;
+            main.maxParticles = MaxStampsPerBullet;
+
+            // 반드시 월드입니다. 로컬이면 자국이 총알을 따라다녀서
+            // "지나간 자리에 남는다"가 성립하지 않습니다.
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+            main.startSpeed = 0f;
+            main.gravityModifier = 0f;
+
+            var emission = stamps.emission;
+            emission.enabled = true;
+            emission.rateOverTime = 0f;
+
+            var shape = stamps.shape;
+            shape.enabled = false;
+
+            // 시간이 지나며 사라지도록. 색은 매 발 프로필 색으로 덮어씁니다.
+            var overLifetime = stamps.colorOverLifetime;
+            overLifetime.enabled = true;
+
+            var sizeOverLifetime = stamps.sizeOverLifetime;
+            sizeOverLifetime.enabled = false;
+
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.alignment = ParticleSystemRenderSpace.View;
+            renderer.receiveShadows = false;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            renderer.sortingOrder = 0;
+        }
+
+        private static Mesh? _headQuad;
+
+        /// <summary>
+        /// 머리 판 메시.
+        ///
+        /// 기준점을 <b>앞쪽 끝</b>에 둡니다(x는 -1~0). 이러면 길이를 늘려도 총알이 있는
+        /// 앞머리는 제자리에 있고 뒤로만 자랍니다 — 가운데 기준이면 길이를 키울 때
+        /// 머리가 총알보다 앞으로 튀어나갑니다.
+        ///
+        /// UV는 도형 텍스처와 같은 약속입니다 — u가 진행 방향(1이 앞), v가 굵기.
+        /// </summary>
+        private static Mesh HeadQuad
+        {
+            get
+            {
+                if (_headQuad != null)
+                    return _headQuad;
+
+                var mesh = new Mesh
+                {
+                    name = "WeaponAura_BulletHeadQuad",
+                    hideFlags = HideFlags.HideAndDontSave,
+                };
+
+                mesh.vertices = new[]
+                {
+                    new Vector3(-1f, -0.5f, 0f),
+                    new Vector3(0f, -0.5f, 0f),
+                    new Vector3(0f, 0.5f, 0f),
+                    new Vector3(-1f, 0.5f, 0f),
+                };
+
+                mesh.uv = new[]
+                {
+                    new Vector2(0f, 0f),
+                    new Vector2(1f, 0f),
+                    new Vector2(1f, 1f),
+                    new Vector2(0f, 1f),
+                };
+
+                // 정점 색을 무시하는 셰이더가 섞여 있어도 흰색이면 결과가 같습니다.
+                mesh.colors = new[] { Color.white, Color.white, Color.white, Color.white };
+                mesh.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+                mesh.RecalculateBounds();
+
+                _headQuad = mesh;
+                return _headQuad;
+            }
+        }
+
+        /// <summary>꼬리와 머리가 공유하는 TrailRenderer 기본 설정.</summary>
+        private static void SetupTrail(TrailRenderer trail)
+        {
             trail.alignment = LineAlignment.View;
             trail.textureMode = LineTextureMode.Stretch;
             trail.numCapVertices = 2;
@@ -285,9 +553,6 @@ namespace WeaponAura.Systems
             trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             trail.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
             trail.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-            trail.minVertexDistance = 0.02f;
-
-            return new TrailHandle { Go = go, Trail = trail };
         }
 
         private static void Configure(TrailHandle handle, BulletTrailProfile profile)
@@ -305,6 +570,199 @@ namespace WeaponAura.Systems
 
             // TrailRenderer는 값을 자기 쪽으로 복사하므로 같은 Gradient 인스턴스를 돌려 써도 됩니다.
             trail.colorGradient = GetGradient(profile);
+
+            ConfigureHead(handle, profile);
+            ConfigureStamps(handle, profile);
+        }
+
+        /// <summary>
+        /// 자국 설정.
+        ///
+        /// 선 방식이면 꼬리가 그리고 자국은 쉽니다. 자국 방식이면 반대로 꼬리를 끕니다 —
+        /// 둘 다 켜면 선 위에 도형이 겹쳐서 무엇을 고른 것인지 알 수 없습니다.
+        /// </summary>
+        private static void ConfigureStamps(TrailHandle handle, BulletTrailProfile profile)
+        {
+            var stamps = handle.Stamps;
+            if (stamps == null || handle.StampRenderer == null)
+                return;
+
+            bool stamp = profile.style == BulletTrailStyle.Stamp && profile.stampSize > 0.0001f;
+
+            handle.Trail.enabled = !stamp;
+            handle.StampRenderer.enabled = stamp;
+
+            if (!stamp)
+            {
+                if (stamps.isPlaying)
+                    stamps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                return;
+            }
+
+            handle.StampRenderer.sharedMaterial =
+                GetHeadMaterial(BulletHeadShapes.Resolve(profile.stampShape, profile.stampTextureName),
+                    profile.additive);
+
+            var main = stamps.main;
+            main.startLifetime = Mathf.Max(0.05f, profile.stampLife);
+            main.startSize = profile.stampSize;
+
+            BulletTrailShading.Resolve(profile.colorStart, profile.intensity, profile.alpha,
+                out Color color, out float alpha);
+
+            float shaderScale = ShaderColorScale(profile.additive);
+            main.startColor = new Color(color.r * shaderScale, color.g * shaderScale,
+                color.b * shaderScale, alpha * shaderScale);
+
+            var emission = stamps.emission;
+            emission.rateOverDistance = Mathf.Clamp(profile.stampRate, 0f, MaxStampRate);
+
+            // 머리 쪽 색에서 꼬리 쪽 색으로 넘어가며 사라지게 합니다.
+            var overLifetime = stamps.colorOverLifetime;
+            overLifetime.color = GetStampGradient(profile);
+        }
+
+        private static BulletTrailProfile? _stampGradientProfile;
+        private static Gradient? _stampGradientCache;
+        private static int _stampGradientHash;
+
+        private static Gradient GetStampGradient(BulletTrailProfile profile)
+        {
+            int hash = profile.colorStart.GetHashCode();
+            hash = (hash * 397) ^ profile.colorEnd.GetHashCode();
+
+            if (_stampGradientCache != null && ReferenceEquals(_stampGradientProfile, profile)
+                && _stampGradientHash == hash)
+                return _stampGradientCache;
+
+            // 자국은 startColor가 이미 밝기·투명도를 담고 있습니다. 여기서는 색조 변화와
+            // 사라짐만 다룹니다 — 양쪽에서 밝기를 곱하면 두 번 곱해집니다.
+            float startPeak = Mathf.Max(profile.colorStart.r,
+                Mathf.Max(profile.colorStart.g, profile.colorStart.b));
+            float endPeak = Mathf.Max(profile.colorEnd.r,
+                Mathf.Max(profile.colorEnd.g, profile.colorEnd.b));
+
+            Color start = startPeak > 0.0001f
+                ? new Color(profile.colorStart.r / startPeak, profile.colorStart.g / startPeak,
+                    profile.colorStart.b / startPeak, 1f)
+                : Color.white;
+
+            Color end = endPeak > 0.0001f
+                ? new Color(profile.colorEnd.r / endPeak, profile.colorEnd.g / endPeak,
+                    profile.colorEnd.b / endPeak, 1f)
+                : Color.white;
+
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(start, 0f),
+                    new GradientColorKey(end, 1f),
+                },
+                new[]
+                {
+                    new GradientAlphaKey(1f, 0f),
+                    new GradientAlphaKey(0.7f, 0.4f),
+                    new GradientAlphaKey(0f, 1f),
+                });
+
+            _stampGradientCache = gradient;
+            _stampGradientProfile = profile;
+            _stampGradientHash = hash;
+            return gradient;
+        }
+
+        /// <summary>
+        /// 총알 머리 설정.
+        ///
+        /// 원본 궤적을 숨기지 않는 동안에는 그리지 않습니다. 원본 대시와 우리 머리가
+        /// 같은 자리에 겹쳐서 두 겹으로 보이기 때문입니다.
+        /// </summary>
+        private static void ConfigureHead(TrailHandle handle, BulletTrailProfile profile)
+        {
+            var head = handle.HeadRenderer;
+            if (head == null)
+                return;
+
+            bool draw = BulletTrailSettings.HideVanillaTrail && profile.headWidth > 0.0001f;
+
+            head.enabled = draw;
+            if (!draw)
+                return;
+
+            head.sharedMaterial = GetHeadMaterial(profile, profile.additive);
+
+            handle.HeadWidth = profile.headWidth;
+            handle.HeadLength = profile.headWidth * Mathf.Max(0.2f, profile.headAspect);
+
+            ApplyHeadEmission(head, profile);
+        }
+
+        /// <summary>
+        /// 원본 총알(<c>Lazer</c> 셰이더)의 <c>_EmissionColor</c> 최대 채널값.
+        /// 실측 (4.579, 1.525, 0) — 채널이 1을 한참 넘는 HDR 값입니다.
+        /// </summary>
+        private const float VanillaHeadEmission = 4.579f;
+
+        /// <summary>이 밝기에서 원본과 같은 세기가 나오도록 맞춥니다 (= 기본 headIntensity).</summary>
+        private const float HeadIntensityReference = 1.35f;
+
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+
+        private static MaterialPropertyBlock? _headBlock;
+
+        /// <summary>
+        /// 머리 밝기를 HDR 발광으로 넣습니다.
+        ///
+        /// 정점 색만으로는 원본을 따라갈 수 없습니다. 정점 색은 1에서 천장에 막히는데,
+        /// 원본은 발광값 4.58로 블룸을 태워서 그만큼 또렷합니다(실측). 그래서 같은 수단을 씁니다.
+        ///
+        /// 머티리얼이 아니라 <see cref="MaterialPropertyBlock"/>에 넣습니다 — 머티리얼은
+        /// 도형이 같은 등급끼리 공유하므로, 거기에 색을 쓰면 한 등급을 만질 때 다른 등급의
+        /// 총알까지 같이 바뀝니다.
+        ///
+        /// 꼬리는 건드리지 않습니다. 이미 쓰고 있는 사람의 잔상 밝기가 업데이트만으로
+        /// 달라지면 안 됩니다.
+        /// </summary>
+        /// <summary>
+        /// 머리 밝기를 실제 발광값으로 환산합니다.
+        ///
+        /// 설정 창 미리보기도 이 함수를 씁니다 — 미리보기만 따로 계산하면 화면에서
+        /// 하얗게 뜬 머리가 미리보기에서는 멀쩡한 색으로 보입니다.
+        /// </summary>
+        public static float HeadEmissionGain(float headIntensity)
+            => Mathf.Max(0f, headIntensity) / HeadIntensityReference * VanillaHeadEmission;
+
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int TintColorId = Shader.PropertyToID("_TintColor");
+
+        private static void ApplyHeadEmission(MeshRenderer head, BulletTrailProfile profile)
+        {
+            _headBlock ??= new MaterialPropertyBlock();
+
+            head.GetPropertyBlock(_headBlock);
+
+            var color = profile.ResolveHeadColor();
+
+            // 색조를 지키려면 세 채널에 같은 배율을 곱해야 합니다. 가장 밝은 채널을
+            // 1로 올려 놓고, 실제 세기는 아래 gain이 담당합니다.
+            float peak = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
+            if (peak > 0.0001f)
+                color = new Color(color.r / peak, color.g / peak, color.b / peak, 1f);
+
+            // 판에는 그라디언트가 없습니다(궤적이 아니니까요). 기본 색을 직접 넣어 줘야
+            // 도형 텍스처의 알파가 그대로 실루엣으로 나옵니다.
+            _headBlock.SetColor(BaseColorId, color);
+            _headBlock.SetColor(ColorId, color);
+            _headBlock.SetColor(TintColorId, color);
+
+            float gain = HeadEmissionGain(profile.headIntensity);
+
+            _headBlock.SetColor(EmissionColorId,
+                new Color(color.r * gain, color.g * gain, color.b * gain, 1f));
+
+            head.SetPropertyBlock(_headBlock);
         }
 
         private static BulletTrailProfile? _gradientProfile;
@@ -413,8 +871,26 @@ namespace WeaponAura.Systems
 
             handle.Trail.emitting = false;
 
-            // 꼬리 수명만큼 두면 마지막 점까지 자연스럽게 사라집니다.
-            handle.RecycleAt = Time.time + handle.Trail.time + 0.05f;
+            // 총알이 사라지는 순간 머리도 같이 사라져야 합니다. 꼬리처럼 남겨 두면
+            // 명중 지점에 총알이 잠깐 멈춰 선 것처럼 보입니다.
+            if (handle.HeadRenderer != null)
+                handle.HeadRenderer.enabled = false;
+
+            float linger = handle.Trail.time;
+
+            if (handle.Stamps != null)
+            {
+                // 뿌리기만 멈춥니다. 이미 남은 자국은 제자리에서 수명대로 사라져야
+                // "지나간 자리"라는 말이 성립합니다.
+                if (handle.Stamps.isPlaying)
+                    handle.Stamps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+
+                if (handle.StampRenderer != null && handle.StampRenderer.enabled)
+                    linger = Mathf.Max(linger, handle.Stamps.main.startLifetime.constant);
+            }
+
+            // 남은 것이 다 사라질 때까지 두면 마지막까지 자연스럽게 없어집니다.
+            handle.RecycleAt = Time.time + linger + 0.05f;
         }
 
         private static void Recycle(TrailHandle handle)
@@ -430,6 +906,16 @@ namespace WeaponAura.Systems
 
             handle.Trail.emitting = false;
             handle.Trail.Clear();
+
+            if (handle.HeadRenderer != null)
+                handle.HeadRenderer.enabled = false;
+
+            if (handle.Stamps != null)
+            {
+                handle.Stamps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                handle.Stamps.Clear();
+            }
+
             handle.Go.SetActive(false);
 
             if (_holder != null)
@@ -448,6 +934,44 @@ namespace WeaponAura.Systems
         }
 
         // ── 머티리얼 ─────────────────────────────────────────────
+
+        /// <summary>
+        /// 머리는 도형마다 텍스처가 다르므로 (도형 × 합성방식)별로 머티리얼을 따로 둡니다.
+        ///
+        /// 꼬리처럼 하나를 돌려 쓸 수 없습니다 — 같은 머티리얼의 텍스처를 매 발 바꾸면
+        /// 화면에 이미 떠 있는 다른 총알들의 모양까지 함께 바뀝니다.
+        /// </summary>
+        private static readonly Dictionary<(Texture2D, bool), Material> _headMaterials =
+            new Dictionary<(Texture2D, bool), Material>();
+
+        private static Material GetHeadMaterial(BulletTrailProfile profile, bool additive)
+            => GetHeadMaterial(BulletHeadShapes.Resolve(profile.headShape, profile.headTextureName), additive);
+
+        private static Material GetHeadMaterial(Texture2D texture, bool additive)
+        {
+            // 텍스처로 키를 잡습니다. 내장 도형과 사용자 도형·PNG가 섞이므로 열거형만으로는
+            // 구분이 안 되고, 같은 그림을 고른 등급끼리는 머티리얼을 나눠 쓸 수 있습니다.
+            var key = (texture, additive);
+
+            if (_headMaterials.TryGetValue(key, out var cached) && cached != null)
+                return cached;
+
+            var material = CreateMaterial(additive);
+            material.name = $"WeaponAura_BulletHead_{texture.name}_{(additive ? "Add" : "Blend")}";
+            material.mainTexture = texture;
+
+            // 발광을 켜 둡니다. 실제 색은 렌더러마다 MaterialPropertyBlock으로 들어갑니다
+            // (<see cref="ApplyHeadEmission"/>). 여기서 켜 두지 않으면 셰이더가 발광 항을
+            // 아예 계산하지 않아서 블록에 넣은 값이 무시됩니다.
+            if (material.HasProperty("_EmissionEnabled"))
+                material.SetFloat("_EmissionEnabled", 1f);
+
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+
+            _headMaterials[key] = material;
+            return material;
+        }
 
         private static Material GetAdditiveMaterial()
         {

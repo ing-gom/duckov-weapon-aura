@@ -15,10 +15,10 @@ namespace WeaponAura.UI
     /// 텍스처 한 장을 띄우고, 그 위의 드래그 영역에서 포인터 위치를 칸 번호로 환산합니다.
     /// 오브젝트는 두 개면 충분하고, 칠하는 느낌도 이쪽이 더 좋습니다.
     ///
-    /// 판은 <b>무기 오라 · 총구 화염 · 근접 참격</b> 세 탭에 각각 하나씩 놓입니다. 칸 상태와
-    /// 텍스처는 셋이 나눠 씁니다 — 한 번 그린 도형을 탭을 옮겨 가며 쓸 수 있어야 하고,
-    /// 같은 그림을 세 벌 들고 있을 이유도 없습니다. 저장·불러오기·삭제만 지금 보고 있는
-    /// 탭의 프로필로 갈라집니다(탄환 잔상은 도형을 쓰지 않아 빠집니다).
+    /// 판은 <b>무기 오라 · 탄환 잔상 · 총구 화염 · 근접 참격</b> 네 탭에 각각 하나씩
+    /// 놓입니다. 칸 상태와 텍스처는 넷이 나눠 씁니다 — 한 번 그린 도형을 탭을 옮겨 가며
+    /// 쓸 수 있어야 하고, 같은 그림을 네 벌 들고 있을 이유도 없습니다.
+    /// 저장·불러오기·삭제만 지금 보고 있는 탭의 프로필로 갈라집니다.
     /// </summary>
     public partial class WeaponAuraWindowCanvas
     {
@@ -288,6 +288,7 @@ namespace WeaponAura.UI
             {
                 case WindowTab.Aura: return CurrentProfile()?.textureName ?? "";
                 case WindowTab.Melee: return CurrentMeleeProfile()?.textureName ?? "";
+                case WindowTab.Trail: return CurrentTrailShapeTexture();
                 default: return CurrentMuzzleProfile()?.textureName ?? "";
             }
         }
@@ -308,6 +309,12 @@ namespace WeaponAura.UI
 
                     // 텍스처는 머티리얼이 바뀌는 것이라 값만 반영해서는 안 되고 다시 만들어야 합니다.
                     ApplyEdit(true);
+                    return;
+                }
+
+                case WindowTab.Trail:
+                {
+                    UseTrailShape(name);
                     return;
                 }
 

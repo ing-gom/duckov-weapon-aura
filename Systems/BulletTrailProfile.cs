@@ -46,6 +46,100 @@ namespace WeaponAura.Systems
         /// <summary>true면 가산 합성으로 발광합니다. false면 일반 알파 합성.</summary>
         public bool additive = true;
 
+        // ── 잔상 방식 ────────────────────────────────────────
+
+        /// <summary>
+        /// 꼬리를 선으로 그릴지, 지나간 자리에 도형을 뿌릴지.
+        /// 기본은 선 — 이미 쓰던 사람의 화면이 업데이트만으로 바뀌면 안 됩니다.
+        /// </summary>
+        public BulletTrailStyle style = BulletTrailStyle.Line;
+
+        /// <summary>자국을 1m당 몇 개 남길지. 총알 속도와 무관하게 간격이 일정해집니다.</summary>
+        public float stampRate = 6f;
+
+        /// <summary>자국 하나의 크기(m)</summary>
+        public float stampSize = 0.14f;
+
+        /// <summary>자국이 사라지기까지의 시간(초)</summary>
+        public float stampLife = 0.45f;
+
+        /// <summary>자국 모양 (<see cref="stampTextureName"/>이 비어 있을 때 씁니다)</summary>
+        public BulletHeadShape stampShape = BulletHeadShape.Diamond;
+
+        /// <summary>직접 그린 도형 또는 PNG 파일 이름</summary>
+        public string stampTextureName = "";
+
+        // ── 총알 머리 ────────────────────────────────────────
+        //
+        // 게임 원본 총알에는 본체 모델이 없습니다. 0.04초짜리 짧은 궤적 하나가 곧
+        // "날아가는 총알"로 보이는 구조입니다(BulletNormal·BulletSMG 실측). 그래서
+        // 원본 궤적을 숨기면 총알 자체가 사라지고 꼬리만 남습니다.
+        //
+        // 여기 값들은 그 머리를 모드가 대신 그릴 때 씁니다. 원본과 같은 방식 —
+        // 아주 짧고 굵은 궤적 — 이라 카메라를 향해 저절로 눕고, 총알을 정확히 따라갑니다.
+        // 원본 궤적을 숨기지 않는 동안에는 그리지 않습니다(겹쳐서 두 겹이 됩니다).
+
+        // 기본값은 게임 원본 총알 실측치에 맞춰 뒀습니다 — BulletNormal의 궤적이
+        // 굵기 0.19m · 지속 0.04초입니다. 처음에 잔상 굵기(0.03~0.075)를 기준으로 잡았다가
+        // 머리가 원본의 3분의 1도 안 되게 가늘어서 거의 안 보였습니다.
+
+        /// <summary>머리 굵기(m). 0이면 머리를 그리지 않습니다.</summary>
+        public float headWidth = 0.19f;
+        /// <summary>
+        /// 머리 가로세로비 (굵기 대비 길이). 1이면 정사각, 3이면 원본 대시 느낌.
+        ///
+        /// 예전에는 길이를 초로 잡았는데, 그러면 실제 길이가 <c>시간 × 총알 속도</c>라
+        /// 굵기의 열 배가 넘는 바늘이 되어 어떤 도형을 넣어도 늘어나 버렸습니다.
+        /// 비율로 잡으면 총알 속도와 무관하게 도형이 제 모양을 유지합니다.
+        /// </summary>
+        public float headAspect = 2.5f;
+        /// <summary>머리 밝기 배율. 꼬리보다 밝아야 총알처럼 읽힙니다.</summary>
+        public float headIntensity = 1.35f;
+
+        /// <summary>머리 모양 (<see cref="headTextureName"/>이 비어 있을 때 씁니다)</summary>
+        public BulletHeadShape headShape = BulletHeadShape.Capsule;
+
+        /// <summary>
+        /// 직접 그린 도형 이름 또는 <c>assets/vfx_textures/</c>의 PNG 파일 이름.
+        /// 비어 있으면 <see cref="headShape"/>의 내장 도형을 씁니다.
+        /// </summary>
+        public string headTextureName = "";
+
+        /// <summary>
+        /// true면 머리 색을 꼬리 머리쪽 색(<see cref="colorStart"/>)에서 가져옵니다.
+        ///
+        /// 기본이 true인 이유 — 대부분은 총알과 꼬리가 같은 색이길 원하고, 그때
+        /// 색을 두 군데서 따로 맞추는 건 번거롭기만 합니다. 따로 쓰고 싶을 때만 끕니다.
+        /// </summary>
+        public bool headFollowTrailColor = true;
+
+        /// <summary><see cref="headFollowTrailColor"/>가 false일 때 쓰는 머리 색</summary>
+        public Color headColor = new Color(1f, 1f, 1f, 1f);
+
+        /// <summary>지금 설정에 따라 실제로 쓸 머리 색.</summary>
+        public Color ResolveHeadColor() => headFollowTrailColor ? colorStart : headColor;
+
+        // ── 총알 발광체 ──────────────────────────────────────
+        //
+        // 총알을 따라다니는 빛(SodaPointLight)입니다. 기본값은 전부 "원본 그대로"라
+        // 옵션을 켜도 슬라이더를 움직이기 전까지는 화면이 달라지지 않습니다.
+        // 원본 색·크기는 총알 프리팹마다 달라서 절대값 대신 배율로 다룹니다.
+
+        /// <summary>발광체를 보일지. 끄면 총알 주변 빛이 사라집니다.</summary>
+        public bool glowVisible = true;
+
+        /// <summary>크기 배율 (1 = 원본)</summary>
+        public float glowScale = 1f;
+
+        /// <summary>밝기 배율 (1 = 원본)</summary>
+        public float glowIntensity = 1f;
+
+        /// <summary>색을 어디서 가져올지</summary>
+        public BulletGlowColorMode glowColorMode = BulletGlowColorMode.Vanilla;
+
+        /// <summary><see cref="BulletGlowColorMode.Custom"/>일 때 쓰는 색</summary>
+        public Color glowColor = new Color(1f, 1f, 1f, 1f);
+
         public BulletTrailProfile Clone()
         {
             var clone = new BulletTrailProfile();
@@ -195,6 +289,13 @@ namespace WeaponAura.Systems
                 startWidth = Mathf.Lerp(0.03f, 0.075f, t),
                 endWidth = Mathf.Lerp(0.002f, 0.012f, t),
                 additive = true,
+
+                // 원본 총알(0.19m · 0.04초) 언저리에서 등급에 따라 조금씩 키웁니다.
+                headWidth = Mathf.Lerp(0.16f, 0.24f, t),
+                headAspect = Mathf.Lerp(2.2f, 3.2f, t),
+                headIntensity = Mathf.Lerp(1.2f, 1.5f, t),
+                headShape = BulletHeadShape.Capsule,
+                headFollowTrailColor = true,
             };
         }
 
@@ -262,6 +363,17 @@ namespace WeaponAura.Systems
                 endWidth = startWidth * Range(0.05f, 0.35f),
 
                 additive = Chance(0.8f),
+
+                // 머리도 꼬리 굵기에서 파생시킵니다. 따로 굴리면 가는 실선 끝에
+                // 커다란 구슬이 달린 조합이 나옵니다. 다만 원본 총알(0.19m)보다
+                // 너무 가늘면 안 보이므로 아래를 막아 둡니다.
+                headWidth = Mathf.Max(0.12f, startWidth * Range(2.2f, 3.5f)),
+                headAspect = Range(1.4f, 3.6f),
+                headIntensity = Range(1.15f, 1.6f),
+                headShape = BulletHeadShapes.All[rng.Next(BulletHeadShapes.All.Length)],
+
+                // 색까지 따로 굴리면 머리와 꼬리가 따로 노는 조합이 절반쯤 나옵니다.
+                headFollowTrailColor = true,
             };
         }
 

@@ -95,19 +95,57 @@ trail_off_notice,Bullet trails are off
 trail_scope,Applies to
 trail_scope_player,My shots
 trail_scope_everyone,Everyone
+trail_hide_vanilla_on,Hide the game's own trail
+trail_hide_vanilla_off,Show the game's own trail
 trail_grade_on,Enable trail for this grade
 trail_grade_off,Disable trail for this grade
 trail_grade_disabled_notice,This ammo grade draws no trail
-trail_section_color_head,Head colour (bullet side)
-trail_section_color_tail,Tail colour (fading side)
-trail_section_shape,Shape
-trail_field_length,Trail length
-trail_field_start_width,Head width
-trail_field_end_width,Tail width
-trail_field_alpha,Opacity
-trail_field_intensity,Brightness
-trail_glow_on,Turn glow on
-trail_glow_off,Turn glow off
+trail_section_color_head,Trail colour — front (bullet side)
+trail_section_color_tail,Trail colour — back (fading side)
+trail_section_shape,Trail shape
+trail_style_line,Trail style: line
+trail_style_stamp,Trail style: stamps
+trail_section_stamp,Stamps (trail style: stamps)
+trail_field_stamp_shape,Stamp · shape
+trail_field_stamp_rate,Stamp · per metre
+trail_field_stamp_size,Stamp · size
+trail_field_stamp_life,Stamp · lifetime
+trail_apply_shape_head,Use as head shape
+trail_apply_shape_stamp,Use as stamp shape
+trail_field_length,Trail · length
+trail_field_start_width,Trail · front width
+trail_field_end_width,Trail · back width
+trail_field_alpha,Trail · opacity
+trail_field_intensity,Trail · brightness
+trail_glow_on,Trail glow: off → turn on
+trail_glow_off,Trail glow: on → turn off
+trail_section_head,Bullet head (drawn by the mod)
+trail_head_inactive,Not active — turn on "Hide the game's own trail" above
+trail_head_turn_on,Turn on
+trail_section_glow,Bullet glow (the game’s own light)
+trail_glow_active,Active — multiplier 1 = vanilla
+trail_glow_inactive,Not active — turn on bullet glow control
+trail_glow_turn_on,Turn on
+trail_glow_show,Glow: shown → hide it
+trail_glow_hide,Glow: hidden → show it
+trail_field_glow_scale,Glow · size
+trail_field_glow_intensity,Glow · brightness
+trail_glow_color_vanilla,Glow colour: vanilla
+trail_glow_color_follow_trail,Glow colour: follow the trail
+trail_glow_color_custom,Glow colour: custom
+trail_head_active,Active — the mod draws the bullet head
+trail_field_head_width,Head · width
+trail_field_head_aspect,Head · length ratio
+trail_field_head_intensity,Head · brightness
+trail_field_head_shape,Head · shape
+trail_head_color_follow,Use the trail colour
+trail_head_color_separate,Pick a separate head colour
+trail_head_shape_capsule,Capsule (like vanilla)
+trail_head_shape_dot,Dot
+trail_head_shape_diamond,Diamond
+trail_head_shape_arrow,Arrow
+trail_head_shape_ring,Ring
+trail_head_shape_spark,Spark
 trail_random_applied,Applied a random trail to grade {0} (seed {1}).
 trail_reset_done,Bullet trails reset to defaults
 window_title_muzzle,Muzzle Flash — Grade {0} {1}

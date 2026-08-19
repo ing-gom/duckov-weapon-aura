@@ -131,14 +131,24 @@ namespace WeaponAura.Patches
         /// <summary>총알이 초기화된 직후 — 기록해 둔 등급으로 잔상을 붙입니다.</summary>
         private static void InitPostfix(Projectile __instance)
         {
-            if (!_pendingValid)
-                return;
-
+            bool valid = _pendingValid;
             _pendingValid = false;
 
             try
             {
-                BulletTrailSystem.Apply(__instance, _pendingQuality);
+                if (valid)
+                {
+                    BulletTrailSystem.Apply(__instance, _pendingQuality);
+                }
+                else
+                {
+                    // 이 총알은 모드 잔상 대상이 아닙니다(잔상 꺼짐 / 적 총알 / 탄약 없음).
+                    // 총알 인스턴스는 풀에서 아군·적이 나눠 쓰기 때문에, 직전에 내 총알로
+                    // 쓰이며 원본 궤적이 꺼졌을 수 있습니다. 여기서 되돌리지 않으면
+                    // 적 총알이 잔상도 원본 궤적도 없이 날아갑니다.
+                    VanillaTrailSuppressor.Restore(__instance);
+                    BulletGlowController.Restore(__instance);
+                }
             }
             catch
             {

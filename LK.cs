@@ -224,6 +224,9 @@ public static class LK
         public const string ScopePlayer = "trail_scope_player";
         public const string ScopeEveryone = "trail_scope_everyone";
 
+        public const string HideVanillaOn = "trail_hide_vanilla_on";
+        public const string HideVanillaOff = "trail_hide_vanilla_off";
+
         public const string GradeOn = "trail_grade_on";
         public const string GradeOff = "trail_grade_off";
         public const string GradeDisabledNotice = "trail_grade_disabled_notice";
@@ -231,6 +234,51 @@ public static class LK
         public const string SectionColorHead = "trail_section_color_head";
         public const string SectionColorTail = "trail_section_color_tail";
         public const string SectionShape = "trail_section_shape";
+
+        // ── 잔상 방식 ──
+        public const string StyleLine = "trail_style_line";
+        public const string StyleStamp = "trail_style_stamp";
+        public const string SectionStamp = "trail_section_stamp";
+        public const string FieldStampShape = "trail_field_stamp_shape";
+        public const string FieldStampRate = "trail_field_stamp_rate";
+        public const string FieldStampSize = "trail_field_stamp_size";
+        public const string FieldStampLife = "trail_field_stamp_life";
+
+        public const string ApplyShapeToHead = "trail_apply_shape_head";
+        public const string ApplyShapeToStamp = "trail_apply_shape_stamp";
+        public const string SectionHead = "trail_section_head";
+
+        public const string FieldHeadWidth = "trail_field_head_width";
+        public const string FieldHeadAspect = "trail_field_head_aspect";
+        public const string FieldHeadIntensity = "trail_field_head_intensity";
+        public const string FieldHeadShape = "trail_field_head_shape";
+
+        public const string HeadColorFollow = "trail_head_color_follow";
+        public const string HeadColorSeparate = "trail_head_color_separate";
+
+        public const string HeadActive = "trail_head_active";
+        public const string HeadInactive = "trail_head_inactive";
+        public const string HeadTurnOn = "trail_head_turn_on";
+
+        // ── 총알 발광체 ──
+        public const string SectionGlow = "trail_section_glow";
+        public const string GlowActive = "trail_glow_active";
+        public const string GlowInactive = "trail_glow_inactive";
+        public const string GlowTurnOn = "trail_glow_turn_on";
+        public const string GlowShow = "trail_glow_show";
+        public const string GlowHide = "trail_glow_hide";
+        public const string FieldGlowScale = "trail_field_glow_scale";
+        public const string FieldGlowIntensity = "trail_field_glow_intensity";
+        public const string GlowColorVanilla = "trail_glow_color_vanilla";
+        public const string GlowColorFollowTrail = "trail_glow_color_follow_trail";
+        public const string GlowColorCustom = "trail_glow_color_custom";
+
+        public const string HeadShapeCapsule = "trail_head_shape_capsule";
+        public const string HeadShapeDot = "trail_head_shape_dot";
+        public const string HeadShapeDiamond = "trail_head_shape_diamond";
+        public const string HeadShapeArrow = "trail_head_shape_arrow";
+        public const string HeadShapeRing = "trail_head_shape_ring";
+        public const string HeadShapeSpark = "trail_head_shape_spark";
 
         public const string FieldLength = "trail_field_length";
         public const string FieldStartWidth = "trail_field_start_width";

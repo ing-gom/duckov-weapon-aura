@@ -773,6 +773,12 @@ namespace WeaponAura.UI
                 _lastStatus = "진단 결과를 로그로 출력했습니다.";
             }
 
+            if (GUILayout.Button("원본 탄환 궤적 구조 덤프"))
+            {
+                Helpers.ProjectileTrailDiagnostics.Dump();
+                _lastStatus = "원본 총알 프리팹 구조를 로그로 출력했습니다.";
+            }
+
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("이 무기 OBJ"))
             {
