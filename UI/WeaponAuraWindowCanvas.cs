@@ -158,7 +158,12 @@ namespace WeaponAura.UI
             if (tab == WindowTab.Melee && _meleeBody == null)
                 tab = WindowTab.Aura;
 
+            bool tabChanged = _tab != tab;
             _tab = tab;
+
+            // 탭마다 붙는 무기 종류가 달라서, 고른 무기를 그대로 들고 가면 뜻이 어긋납니다.
+            if (tabChanged)
+                ResetWeaponTargetForTab();
 
             if (_auraBody != null)
                 _auraBody.SetActive(tab == WindowTab.Aura);
@@ -174,6 +179,9 @@ namespace WeaponAura.UI
                 if (pair.Value != null && pair.Value.targetGraphic != null)
                     pair.Value.targetGraphic.color = pair.Key == tab ? ButtonAccentColor : ButtonColor;
             }
+
+            // 레이어 창은 지금 탭을 따라갑니다. 잔상 탭에는 레이어가 없어 버튼도 감춥니다.
+            SyncLayerButton();
 
             // 안내 문구를 먼저 비우고 채웁니다 — 순서가 반대면 새 탭이 띄운 안내
             // ("이 등급은 잔상이 꺼져 있습니다" 등)까지 같이 지워집니다.
@@ -228,9 +236,15 @@ namespace WeaponAura.UI
             OnOpen();
         }
 
+        /// <summary>
+        /// 닫기 요청. 저장하지 않은 변경이 있으면 확인 창이 먼저 뜹니다.
+        ///
+        /// 닫는 경로가 셋(닫기 버튼 · ESC · 토글)인데 전부 여기를 지나갑니다.
+        /// 되돌아가지 못하는 길이 하나라도 남으면 확인 창이 있으나 마나입니다.
+        /// </summary>
         public void Hide()
         {
-            Close();
+            RequestClose();
         }
 
         public void Toggle()
@@ -272,6 +286,10 @@ namespace WeaponAura.UI
             _isOpen = true;
             HookCancel(true);
 
+            // 되돌리기 기준점. UI를 만들기 전에 떠야 합니다 — 구성 중에 값이 손대어질
+            // 여지를 남기면 "열자마자 변경됨"이 됩니다.
+            TakeSnapshot();
+
             // 모드 활성화 때 패치가 실패했으면 여기서 한 번 더 시도합니다.
             // 이게 없으면 게임이 멈추지 않는 채로 창만 뜹니다.
             //
@@ -311,6 +329,14 @@ namespace WeaponAura.UI
 
             if (_canvasRoot != null)
                 _canvasRoot.SetActive(false);
+
+            // 덮여 있던 것들도 함께 접습니다. 다음에 열었을 때 확인 창이 그대로 떠 있으면
+            // 무엇을 묻는지 알 수 없는 창이 됩니다.
+            CloseConfirm();
+            CloseWeaponLibrary();
+            CloseShapeEditor();
+            ClosePasteWindow();
+            CloseShapePicker();
 
             // 복제한 모델이 남아 있을 이유가 없습니다. 다음에 열 때 다시 세웁니다.
             _preview?.Dispose();

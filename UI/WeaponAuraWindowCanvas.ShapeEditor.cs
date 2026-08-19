@@ -15,10 +15,11 @@ namespace WeaponAura.UI
     /// 텍스처 한 장을 띄우고, 그 위의 드래그 영역에서 포인터 위치를 칸 번호로 환산합니다.
     /// 오브젝트는 두 개면 충분하고, 칠하는 느낌도 이쪽이 더 좋습니다.
     ///
-    /// 판은 <b>무기 오라 · 탄환 잔상 · 총구 화염 · 근접 참격</b> 네 탭에 각각 하나씩
-    /// 놓입니다. 칸 상태와 텍스처는 넷이 나눠 씁니다 — 한 번 그린 도형을 탭을 옮겨 가며
-    /// 쓸 수 있어야 하고, 같은 그림을 네 벌 들고 있을 이유도 없습니다.
-    /// 저장·불러오기·삭제만 지금 보고 있는 탭의 프로필로 갈라집니다.
+    /// 판은 <b>창 아래 버튼으로 여는 모달에 하나만</b> 있습니다. 예전에는 네 탭에 각각
+    /// 하나씩 박혀 있었고, 그래서 텍스처와 이름 칸을 서로 묶어 두는 장치가 필요했습니다 —
+    /// 한쪽에서 그린 것이 나머지에도 보여야 했으니까요. 판이 하나면 그 장치가 없어도 됩니다.
+    ///
+    /// 그린 도형을 어느 프로필에 쓸지는 <b>지금 보고 있는 탭</b>이 정합니다.
     /// </summary>
     public partial class WeaponAuraWindowCanvas
     {
@@ -43,10 +44,112 @@ namespace WeaponAura.UI
 
         // ── 구성 ────────────────────────────────────────────────────
 
+        private GameObject? _shapeEditorRoot;
+
+        /// <summary>도형 편집기 모달이 떠 있는지 (ESC 처리가 이걸 봅니다)</summary>
+        private bool ShapeEditorOpen => _shapeEditorRoot != null && _shapeEditorRoot.activeSelf;
+
+        /// <summary>
+        /// 도형 편집기를 창 위에 덮어 띄웁니다.
+        ///
+        /// 예전에는 네 탭에 <b>각각 하나씩</b> 박혀 있었습니다. 같은 판을 네 벌 만들고
+        /// 텍스처와 이름 칸을 서로 묶어 두는 장치까지 필요했습니다 — 한쪽에서 그린 것이
+        /// 나머지에도 보여야 했으니까요. 판이 하나면 그 장치가 통째로 필요 없습니다.
+        ///
+        /// 그린 도형을 <b>어느 프로필에 쓸지</b>는 지금 보고 있는 탭이 정합니다. 모달을
+        /// 여는 동안 탭은 그대로이므로 이 규칙은 예전과 같습니다.
+        /// </summary>
+        private void OpenShapeEditor()
+        {
+            if (_shapeEditorRoot == null)
+                BuildShapeEditorModal();
+
+            if (_shapeEditorRoot == null)
+                return;
+
+            _shapeEditorRoot.SetActive(true);
+            RedrawShapeCanvas();
+            RefreshShapeList();
+        }
+
+        private void CloseShapeEditor()
+        {
+            if (_shapeEditorRoot != null)
+                _shapeEditorRoot.SetActive(false);
+        }
+
+        private void BuildShapeEditorModal()
+        {
+            if (_canvasRoot == null)
+                return;
+
+            var backdrop = MakeImage("ShapeEditorBackdrop", _canvasRoot.transform, BackdropColor);
+            Stretch(backdrop.rectTransform);
+            backdrop.raycastTarget = true;
+            _shapeEditorRoot = backdrop.gameObject;
+
+            var panel = MakeImage("ShapeEditorPanel", backdrop.transform, PanelColor);
+            var rect = panel.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(1180f, 420f);
+
+            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(20, 20, 18, 18);
+            layout.spacing = 10f;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+
+            var header = MakeRect("Header", panel.transform);
+            SetHeight(header, 40f);
+
+            var headerLayout = header.gameObject.AddComponent<HorizontalLayoutGroup>();
+            headerLayout.spacing = 12f;
+            headerLayout.childControlWidth = true;
+            headerLayout.childControlHeight = true;
+            headerLayout.childForceExpandWidth = false;
+            headerLayout.childAlignment = TextAnchor.MiddleLeft;
+
+            var title = MakeText("Title", header, L.Muzzle.SectionDraw, 26, TextColor,
+                TextAlignmentOptions.MidlineLeft);
+            title.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+
+            MakeButton(header, L.Library.Close, 110f, CloseShapeEditor, ButtonColor);
+
+            // 왼쪽에 가진 것, 오른쪽에 그리는 판. 한 화면에 있어야 고르고 고치기가 됩니다.
+            var body = MakeRect("ShapeEditorBody", panel.transform);
+            body.gameObject.AddComponent<LayoutElement>().preferredHeight = 300f;
+
+            var bodyLayout = body.gameObject.AddComponent<HorizontalLayoutGroup>();
+            bodyLayout.spacing = 14f;
+            bodyLayout.childControlWidth = true;
+            bodyLayout.childControlHeight = true;
+            bodyLayout.childForceExpandWidth = false;
+            bodyLayout.childForceExpandHeight = true;
+
+            BuildShapeList(body);
+
+            var right = MakeRect("ShapeEditorRight", body);
+            right.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+
+            var rightLayout = right.gameObject.AddComponent<VerticalLayoutGroup>();
+            rightLayout.spacing = 8f;
+            rightLayout.childControlWidth = true;
+            rightLayout.childControlHeight = true;
+            rightLayout.childForceExpandWidth = true;
+            rightLayout.childForceExpandHeight = false;
+
+            BuildShapeEditor(right);
+
+            ApplyFont(panel.gameObject);
+        }
+
         private void BuildShapeEditor(Transform parent)
         {
-            AddSectionLabel(parent, L.Muzzle.SectionDraw);
-
+            // 모달 제목이 이미 "도형 그리기"라 여기서 머리말을 또 붙이지 않습니다.
             var row = MakeRect("ShapeEditorRow", parent);
             SetHeight(row, 232f);
 
@@ -107,8 +210,11 @@ namespace WeaponAura.UI
             AddShapeEditorButton(side, L.Muzzle.ShapeSave, SaveDrawnShape, ButtonAccentColor);
             AddShapeEditorButton(side, L.Muzzle.ShapeRandom, RandomizeDrawnShape, ButtonColor);
             AddShapeEditorButton(side, L.Muzzle.ShapeClear, ClearDrawnShape, ButtonColor);
-            AddShapeEditorButton(side, L.Muzzle.ShapeLoad, LoadSelectedShape, ButtonColor);
-            AddShapeEditorButton(side, L.Muzzle.ShapeDelete, DeleteSelectedShape, ButtonColor);
+            // 불러오기·삭제는 왼쪽 목록이 맡습니다.
+            //
+            // 예전에는 이름을 쳐서 불러오고 지웠습니다. 이름을 정확히 기억해야 했고,
+            // 무엇이 있는지 보이지도 않아서 지우려면 먼저 이름부터 알아내야 했습니다.
+            // 이 모달은 <b>만드는 일</b>만 맡습니다.
 
             _shapeEditorHint = MakeText("ShapeEditorHint", side, L.Muzzle.ShapeHint, 15, DimTextColor,
                 TextAlignmentOptions.TopLeft);
@@ -408,6 +514,7 @@ namespace WeaponAura.UI
             }
         }
 
+        /// <summary>저장 뒤에는 목록도 다시 그립니다 — 방금 만든 것이 바로 보여야 합니다.</summary>
         private void SaveDrawnShape()
         {
             string name = ShapeName();
@@ -429,6 +536,9 @@ namespace WeaponAura.UI
             UseShapeInCurrentTab(name.Trim());
 
             ShowHint(string.Format(L.Muzzle.ShapeSaved, name.Trim()));
+
+            // 방금 만든 것이 왼쪽 목록에 바로 보여야 합니다.
+            RefreshShapeList();
         }
 
         /// <summary>지금 등급이 쓰는 도형이 직접 그린 것이면 판으로 불러옵니다.</summary>
@@ -472,6 +582,9 @@ namespace WeaponAura.UI
 
             ShowHint(string.Format(L.Muzzle.ShapeDeleted, name));
         }
+
+        /// <summary>창을 닫을 때 모달도 접어 둡니다.</summary>
+        private void HideShapeEditor() => CloseShapeEditor();
 
         private void DisposeShapeEditor()
         {

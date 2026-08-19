@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using WeaponAura.Systems;
 
 namespace WeaponAura.UI
 {
@@ -125,6 +126,7 @@ namespace WeaponAura.UI
         public void Dispose()
         {
             OnDispose();
+            DestroyLayerBurst();
 
             if (_stage != null)
             {
@@ -174,6 +176,83 @@ namespace WeaponAura.UI
                 if (light != null)
                     light.cullingMask = 1 << Layer;
             }
+        }
+
+        // ── 레이어 ───────────────────────────────────────────────────
+
+        /// <summary>지금 무대에 떠 있는 레이어 뿜음. 다음 발사 때 갈아 끼웁니다.</summary>
+        private GameObject? _layerBurst;
+
+        /// <summary>
+        /// 레이어를 무대에서도 한 번 뿜습니다.
+        ///
+        /// 총구·참격 레이어는 쏘거나 휘두르는 <b>순간</b>에만 나오는 것이라, 무대에서도
+        /// 발사에 맞춰 다시 만들어야 합니다 — 오라 레이어처럼 계속 도는 물건이 아닙니다.
+        /// 만드는 함수는 런타임과 같은 것을 씁니다. 미리보기와 실제가 갈릴 여지를 남기지
+        /// 않는 것이 이 무대의 전부입니다.
+        /// </summary>
+        /// <param name="size">이펙트 크기(m) — "무기 전체" 자리를 쓰는 레이어의 상자 크기</param>
+        /// <param name="speed">재생 배속. 게임 이펙트를 늦춰 보는 무대는 같은 값을 넘깁니다.</param>
+        /// <param name="worldPose">
+        /// 무대 원점이 아닌 다른 자리에 놓아야 할 때. 참격 레이어는 호 위에 놓이므로
+        /// 여기로 그 자리를 넘깁니다 — 미리보기와 실제가 같은 자리에 뿜어야 합니다.
+        /// </param>
+        protected void PlayLayerBurst(WeaponEffectLayer[]? layers, float size, float speed = 1f,
+            (Vector3 position, Quaternion rotation)? worldPose = null,
+            EffectLayerBurst.BurstArc? arc = null)
+        {
+            DestroyLayerBurst();
+
+            if (Anchor == null)
+                return;
+
+            _layerBurst = EffectLayerBurst.CreatePreview(layers, Anchor,
+                Vector3.one * Mathf.Max(0.05f, size), speed, arc, worldPose);
+
+            // 레이어를 옮기지 않으면 미리보기 카메라가 못 찍습니다 — 만들어 놓고
+            // 화면에 아무것도 없는 그 상태가 됩니다.
+            if (_layerBurst != null)
+                PrepareForStage(_layerBurst);
+        }
+
+        private void DestroyLayerBurst()
+        {
+            if (_layerBurst == null)
+                return;
+
+            UnityEngine.Object.Destroy(_layerBurst);
+            _layerBurst = null;
+        }
+
+        /// <summary>
+        /// 레이어를 다 담으려면 세로로 몇 미터가 필요한지.
+        ///
+        /// 시야를 안 넓히면 멀리 뿜는 레이어가 화면 밖으로 나가서, 값을 올릴수록
+        /// 오히려 안 보이게 됩니다.
+        /// </summary>
+        protected static float LayerViewHeight(WeaponEffectLayer[]? layers)
+        {
+            if (layers == null)
+                return 0f;
+
+            float needed = 0f;
+
+            foreach (var layer in layers)
+            {
+                if (layer == null || !layer.enabled)
+                    continue;
+
+                // 수명 동안 날아가는 거리 + 떠오른 높이 + 알갱이 자체 크기.
+                float reach = Mathf.Abs(layer.speed) * Mathf.Max(0.05f, layer.lifetime);
+                float rise = Mathf.Abs(layer.rise) * Mathf.Max(0.05f, layer.lifetime);
+                float grain = layer.size * Mathf.Max(layer.sizeStart, layer.sizeEnd);
+
+                float half = Mathf.Max(reach, rise) + layer.spread + grain + layer.offset.magnitude;
+
+                needed = Mathf.Max(needed, half * 2.2f);
+            }
+
+            return needed;
         }
 
         // ── 자원 ─────────────────────────────────────────────────────

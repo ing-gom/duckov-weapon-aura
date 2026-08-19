@@ -27,6 +27,17 @@ namespace WeaponAura.Systems
         private static DuckovItemAgent? _trackedAgent;
         private static int _trackedTier = -2;
         private static WeaponAuraMode _trackedMode = (WeaponAuraMode)(-1);
+
+        /// <summary>
+        /// 지금 오라를 만들 때 쓴 전용 설정의 키 (없으면 빈 문자열).
+        ///
+        /// 티어만 비교하면 "등급은 같은데 전용 설정만 다른" 두 무기를 번갈아 들 때
+        /// 오라가 다시 만들어지지 않습니다. 그 판정에 이 값이 함께 들어가야 합니다.
+        /// </summary>
+        private static string _trackedOverrideKey = "";
+
+        /// <summary>지금 든 무기의 TypeID (전용 설정 조회용)</summary>
+        private static int _trackedWeaponTypeId;
         private static WeaponAuraController? _controller;
         private static DuckovItemAgent? _buildFailedAgent;
 
@@ -94,7 +105,7 @@ namespace WeaponAura.Systems
             if (_controller == null)
                 return;
 
-            var profile = WeaponAuraProfiles.Get(_trackedTier);
+            var profile = ResolveAuraProfile(_trackedWeaponTypeId, _trackedTier);
             if (profile == null)
                 return;
 
@@ -109,6 +120,8 @@ namespace WeaponAura.Systems
             _buildFailedAgent = null;
             _trackedTier = -2;
             _trackedMode = (WeaponAuraMode)(-1);
+            _trackedOverrideKey = "";
+            _trackedWeaponTypeId = 0;
             CurrentLevel = -1;
             CurrentWeaponName = "-";
             MeshShapeInUse = false;
@@ -158,21 +171,36 @@ namespace WeaponAura.Systems
                 CurrentDisplayQuality = WeaponHelper.GetDisplayQuality(item);
                 CurrentMetaQuality = WeaponHelper.GetMetaQuality(item);
 
+                int weaponTypeId = SafeTypeId(item);
+                string overrideKey = WeaponOverrides.ResolveKey(weaponTypeId);
+
                 bool enabled = mode != WeaponAuraMode.Disabled || DebugIgnoreSetting;
 
-                // 티어 단위로 꺼 둔 등급은 오라를 만들지 않습니다.
+                // 단위로 꺼 둔 것은 오라를 만들지 않습니다.
                 // (낮은 등급 무기에는 오라를 원치 않는 경우가 많습니다)
+                // 전용 설정이 걸린 무기는 그쪽의 켜짐 여부를 봅니다 — 등급 티어를 꺼 두고
+                // 특정 총만 켜는 조합이 되어야 "이 총만 빛나게"가 가능합니다.
                 if (enabled && tier >= 0)
                 {
-                    var tierProfile = WeaponAuraProfiles.Get(tier);
-                    if (tierProfile != null && !tierProfile.enabled && !DebugIgnoreSetting)
+                    var active = ResolveAuraProfile(weaponTypeId, tier);
+                    if (active != null && !active.enabled && !DebugIgnoreSetting)
                         enabled = false;
                 }
 
                 if (!enabled)
                     tier = -1;
 
-                bool sameState = agent == _trackedAgent && tier == _trackedTier && mode == _trackedMode;
+                // 무기 자체도 판정에 넣습니다.
+                //
+                // 넣지 않으면 <b>등급이 같고 전용 설정이 없는</b> 두 무기가 서로 구분되지
+                // 않습니다. 게임이 손에 든 칸의 ItemAgent를 돌려 쓰면 무기를 바꿔도
+                // "같은 상태"로 판정되어 앞 무기의 오라가 그대로 남고, 그 뒤로 ApplyLive가
+                // <see cref="_trackedWeaponTypeId"/>로 프로필을 찾기 때문에 <b>앞 무기의
+                // 설정이 지금 든 무기에 계속 먹습니다</b>. 저장·불러오기와 무관하게,
+                // 무기를 바꿔 든 순간부터 어긋나 있습니다.
+                bool sameState = agent == _trackedAgent && tier == _trackedTier && mode == _trackedMode
+                                 && overrideKey == _trackedOverrideKey
+                                 && weaponTypeId == _trackedWeaponTypeId;
 
                 // 생성에 실패한 무기는 같은 상태가 유지되는 동안 다시 시도하지 않습니다 (매 틱 재시도 방지).
                 if (!force && sameState && (_controller != null || _buildFailedAgent == agent))
@@ -186,20 +214,23 @@ namespace WeaponAura.Systems
                 _trackedAgent = agent;
                 _trackedTier = tier;
                 _trackedMode = mode;
+                _trackedOverrideKey = overrideKey;
+                _trackedWeaponTypeId = weaponTypeId;
 
                 // 무기별로 등급이 실제로 갈리는지 한 줄로 남깁니다.
                 // (전부 같은 티어로 뜨는 문제를 눈으로 확인할 수 있게)
-                var chosen = WeaponAuraProfiles.Get(tier);
+                var chosen = ResolveAuraProfile(weaponTypeId, tier);
                 UnityEngine.Debug.Log(
                     $"[WeaponAura] 등급 판정: {CurrentWeaponName} — " +
                     $"표시={CurrentDisplayQuality} 메타={CurrentMetaQuality} 사용={level} " +
                     $"→ 티어 {tier}{(chosen != null ? $" {chosen.name}" : "")} " +
-                    $"(기준={AuraSettings.TierSource})");
+                    $"(기준={AuraSettings.TierSource}" +
+                    $"{(overrideKey.Length > 0 ? $", 전용={overrideKey}" : "")})");
 
                 if (tier < 0)
                     return;
 
-                if (!CreateAura(agent, tier))
+                if (!CreateAura(agent, tier, weaponTypeId))
                     _buildFailedAgent = agent;
             }
             catch (Exception ex)
@@ -210,9 +241,9 @@ namespace WeaponAura.Systems
             }
         }
 
-        private static bool CreateAura(DuckovItemAgent agent, int tier)
+        private static bool CreateAura(DuckovItemAgent agent, int tier, int weaponTypeId)
         {
-            var profile = WeaponAuraProfiles.Get(tier);
+            var profile = ResolveAuraProfile(weaponTypeId, tier);
             if (profile == null)
                 return false;
 
@@ -576,6 +607,16 @@ namespace WeaponAura.Systems
             if (renderer.gameObject.name.StartsWith("WeaponAura_"))
                 return false;
 
+            // 점광원의 빛 덩어리는 무기가 아닙니다 — 실루엣 고르기와 같은 규칙입니다.
+            //
+            // 실루엣만 고쳐서는 부족했습니다. 크기(바운즈)도 이 함수로 재는데, 일반
+            // SodaPointLight가 0.75m라 크기 상한에 안 걸리고 그대로 섞였습니다. 그래서
+            // AK 바운즈가 실제 총 길이(0.79m)가 아니라 1.34m로 잡혔습니다 — 오라가
+            // 총보다 한참 크게 퍼지는 원인입니다.
+            if (renderer.GetComponent<SodaPointLight>() != null
+                || renderer.GetComponentInParent<SodaPointLight>() != null)
+                return false;
+
             return true;
         }
 
@@ -651,6 +692,30 @@ namespace WeaponAura.Systems
             }
 
             return WeaponAuraProfiles.ResolveTier(level);
+        }
+
+        /// <summary>
+        /// 이 무기에 적용할 오라 프로필. <b>전용 설정 → 분류 → 등급 티어</b> 순입니다.
+        ///
+        /// 등급 티어를 대체하지 않고 앞에 얹기만 하므로, 전용 설정을 만들지 않은 무기는
+        /// 지금까지와 완전히 같은 값을 씁니다.
+        /// </summary>
+        public static WeaponAuraProfile? ResolveAuraProfile(int weaponTypeId, int tier)
+        {
+            var over = WeaponOverrides.Resolve(weaponTypeId);
+            return over != null ? over.aura : WeaponAuraProfiles.Get(tier);
+        }
+
+        private static int SafeTypeId(Item item)
+        {
+            try
+            {
+                return item.TypeID;
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         private static string SafeItemName(Item item)

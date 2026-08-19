@@ -55,14 +55,15 @@ namespace WeaponAura.Systems
         // ──────────────────────────────────────────────────────────
 
         /// <summary>발사 직후 총구에서 화염을 터뜨립니다.</summary>
-        public static void Spawn(Transform? muzzle, int ammoQuality)
+        /// <param name="weaponTypeId">쏜 총의 TypeID. 전용 설정이 걸려 있으면 등급보다 우선합니다.</param>
+        public static void Spawn(Transform? muzzle, int ammoQuality, int weaponTypeId = 0)
         {
             if (muzzle == null || !MuzzleFlashSettings.Enabled)
                 return;
 
             try
             {
-                var profile = MuzzleFlashProfiles.Resolve(ammoQuality);
+                var profile = MuzzleFlashProfiles.Resolve(ammoQuality, weaponTypeId);
                 if (profile == null || !profile.enabled)
                     return;
 

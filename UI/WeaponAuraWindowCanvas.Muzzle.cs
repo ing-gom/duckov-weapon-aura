@@ -161,6 +161,7 @@ namespace WeaponAura.UI
             int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)TierColumns));
 
             var grid = MakeRect("MuzzleGradeGrid", parent);
+            RegisterGradeSelector(grid.gameObject);
             SetHeight(grid, rows * TierCellHeight + (rows - 1) * TierCellSpacing);
 
             var layout = grid.gameObject.AddComponent<GridLayoutGroup>();
@@ -192,11 +193,11 @@ namespace WeaponAura.UI
         {
             _muzzleRows.Clear();
 
-            AddSectionLabel(parent, L.Section.Display);
-            BuildMuzzleDisplayRow(parent);
+            var section1 = AddSectionLabel(parent, L.Section.Display);
+            BuildMuzzleDisplayRow(section1);
 
-            AddSectionLabel(parent, L.Muzzle.SectionColorInner);
-            _muzzlePickerInner = AddColorPicker(parent, color =>
+            var section2 = AddSectionLabel(parent, L.Muzzle.SectionColorInner);
+            _muzzlePickerInner = AddColorPicker(section2, color =>
             {
                 var profile = CurrentMuzzleProfile();
                 if (profile == null)
@@ -206,8 +207,8 @@ namespace WeaponAura.UI
                 HighlightMuzzleGradeButton();
             });
 
-            AddSectionLabel(parent, L.Muzzle.SectionColorOuter);
-            _muzzlePickerOuter = AddColorPicker(parent, color =>
+            var section3 = AddSectionLabel(parent, L.Muzzle.SectionColorOuter);
+            _muzzlePickerOuter = AddColorPicker(section3, color =>
             {
                 var profile = CurrentMuzzleProfile();
                 if (profile == null)
@@ -217,27 +218,26 @@ namespace WeaponAura.UI
                 HighlightMuzzleGradeButton();
             });
 
-            AddSectionLabel(parent, L.Muzzle.SectionLook);
-            BuildMuzzleShapeRow(parent);
-            BuildMuzzlePresetRow(parent);
-            BuildShapeEditor(parent);
+            var section4 = AddSectionLabel(parent, L.Muzzle.SectionLook);
+            BuildMuzzleShapeRow(section4);
+            BuildMuzzlePresetRow(section4);
 
-            AddSectionLabel(parent, L.Muzzle.SectionShape);
+            var section5 = AddSectionLabel(parent, L.Muzzle.SectionShape);
 
             // 게임 화염 형태를 그대로 쓰는 모드에서의 배율.
-            AddMuzzleSlider(parent, L.Muzzle.FieldSizeScale, 0.2f, 5f, "0.00",
+            AddMuzzleSlider(section5, L.Muzzle.FieldSizeScale, 0.2f, 5f, "0.00",
                 p => p.sizeScale, (p, v) => p.sizeScale = v);
 
             // 상한을 0.5m로 뒀더니 끝까지 올려도 작다는 이야기가 나왔습니다.
             // 총·카메라 거리에 따라 체감이 크게 달라지는 값이라 넉넉히 열어 둡니다.
-            AddMuzzleSlider(parent, L.Muzzle.FieldSize, 0f, 4f, "0.000",
+            AddMuzzleSlider(section5, L.Muzzle.FieldSize, 0f, 4f, "0.000",
                 p => p.size, (p, v) => p.size = v);
             // 프리셋이 0.4초까지 쓰기 때문에 상한이 0.25면 슬라이더가 값을 잘라 버립니다.
-            AddMuzzleSlider(parent, L.Muzzle.FieldDuration, 0.02f, 0.6f, "0.000",
+            AddMuzzleSlider(section5, L.Muzzle.FieldDuration, 0.02f, 0.6f, "0.000",
                 p => p.duration, (p, v) => p.duration = v);
-            AddMuzzleSlider(parent, L.Muzzle.FieldAlpha, 0f, 1f, "0.00",
+            AddMuzzleSlider(section5, L.Muzzle.FieldAlpha, 0f, 1f, "0.00",
                 p => p.alpha, (p, v) => p.alpha = v);
-            AddMuzzleSlider(parent, L.Muzzle.FieldIntensity, 0.5f, 3f, "0.00",
+            AddMuzzleSlider(section5, L.Muzzle.FieldIntensity, 0.5f, 3f, "0.00",
                 p => p.intensity, (p, v) => p.intensity = v);
 
         }
@@ -248,25 +248,25 @@ namespace WeaponAura.UI
         /// </summary>
         private void BuildMuzzleAdvanced(Transform parent)
         {
-            AddSectionLabel(parent, L.Muzzle.SectionSparks);
-            AddMuzzleSlider(parent, L.Muzzle.FieldSparkCount, 0f, 20f, "0",
+            var section6 = AddSectionLabel(parent, L.Muzzle.SectionSparks);
+            AddMuzzleSlider(section6, L.Muzzle.FieldSparkCount, 0f, 20f, "0",
                 p => p.sparkCount, (p, v) => p.sparkCount = Mathf.RoundToInt(v));
             // 속도가 아니라 도달 거리입니다 — 수명이 바뀌어도 이 거리는 그대로입니다.
-            AddMuzzleSlider(parent, L.Muzzle.FieldSparkDistance, 0f, 6f, "0.00",
+            AddMuzzleSlider(section6, L.Muzzle.FieldSparkDistance, 0f, 6f, "0.00",
                 p => p.sparkDistance, (p, v) => p.sparkDistance = v);
             // 하트·별은 불티보다 훨씬 커야 모양이 보입니다. 상한을 좁게 잡았다가
             // "끝까지 올려도 작다"를 세 번 들었습니다. 넉넉히 열어 둡니다.
-            AddMuzzleSlider(parent, L.Muzzle.FieldSparkSize, 0.004f, 2f, "0.000",
+            AddMuzzleSlider(section6, L.Muzzle.FieldSparkSize, 0.004f, 2f, "0.000",
                 p => p.sparkSize, (p, v) => p.sparkSize = v);
-            AddMuzzleSlider(parent, L.Muzzle.FieldSparkSpread, 0f, 90f, "0",
+            AddMuzzleSlider(section6, L.Muzzle.FieldSparkSpread, 0f, 90f, "0",
                 p => p.sparkSpread, (p, v) => p.sparkSpread = v);
             // 중력 배율이 아니라 최종 높이(m). 바닥을 뚫거나 끝없이 솟는 조합이 나올 수 없습니다.
-            AddMuzzleSlider(parent, L.Muzzle.FieldSparkRise, -2f, 2f, "0.00",
+            AddMuzzleSlider(section6, L.Muzzle.FieldSparkRise, -2f, 2f, "0.00",
                 p => p.sparkRise, (p, v) => p.sparkRise = v);
-            AddMuzzleSlider(parent, L.Muzzle.FieldSparkSpin, -720f, 720f, "0",
+            AddMuzzleSlider(section6, L.Muzzle.FieldSparkSpin, -720f, 720f, "0",
                 p => p.sparkSpin, (p, v) => p.sparkSpin = v);
 
-            BuildMuzzleStretchRow(parent);
+            BuildMuzzleStretchRow(section6);
         }
 
         /// <summary>
@@ -292,6 +292,36 @@ namespace WeaponAura.UI
             _muzzleShapeLabel.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
 
             MakeButton(row, L.Muzzle.ShapeNext, 56f, () => CycleMuzzleShape(1), ButtonColor);
+
+            MakeButton(row, L.Picker.Open, 110f, () =>
+            {
+                var profile = CurrentMuzzleProfile();
+                if (profile == null)
+                    return;
+
+                string current = string.IsNullOrEmpty(profile.textureName)
+                    ? profile.shape.ToString()
+                    : profile.textureName;
+
+                OpenShapePickerFor(current, MuzzleFlashShapes.All,
+                    shape =>
+                    {
+                        var target = CurrentMuzzleProfile();
+                        if (target != null)
+                            target.shape = shape;
+                    },
+                    name =>
+                    {
+                        var target = CurrentMuzzleProfile();
+                        if (target != null)
+                            target.textureName = name;
+                    },
+                    () =>
+                    {
+                        RefreshMuzzleShapeLabel();
+                        RefreshMuzzlePreview();
+                    });
+            }, ButtonAccentColor);
 
             // 폴더에 PNG를 새로 넣었을 때 게임을 껐다 켜지 않아도 되게.
             MakeButton(row, L.Muzzle.ShapeRescan, 56f, () =>
@@ -599,6 +629,10 @@ namespace WeaponAura.UI
 
         private MuzzleFlashProfile? CurrentMuzzleProfile()
         {
+            var over = CurrentOverride();
+            if (over != null)
+                return over.muzzle;
+
             return MuzzleFlashProfiles.Get(_editingMuzzleGrade);
         }
 

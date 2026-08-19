@@ -29,7 +29,30 @@ namespace WeaponAura.Systems
         private const string StampName = "WeaponAura_BulletStamps";
 
         /// <summary>자국 하나가 남길 수 있는 최대 개수. 연사 무기가 화면을 덮는 것을 막습니다.</summary>
-        private const int MaxStampsPerBullet = 64;
+        /// <summary>
+        /// 총알 하나가 동시에 띄울 수 있는 자국 수의 <b>천장</b>.
+        ///
+        /// 예전에는 이 값(64)을 그대로 썼습니다. 그런데 자국은 "지나간 거리"마다 찍히므로
+        /// (rateOverDistance), 초당 100m를 가는 총알이 기본값(6개/m, 수명 0.45초)이면
+        /// 살아 있는 자국이 270개가 됩니다. 64에서 막히면 <b>그 지점부터 자국이 더 안
+        /// 나옵니다</b> — 총알은 계속 날아가는데 잔상만 도중에 끊겨 보였던 원인입니다.
+        /// (Unity는 상한에 닿으면 기존 것이 죽을 때까지 새로 안 뿜습니다)
+        ///
+        /// 그래서 실제 상한은 프로필에서 계산하고, 이 값은 안전 천장으로만 씁니다.
+        /// </summary>
+        private const int MaxStampsPerBullet = 512;
+
+        /// <summary>
+        /// 자국 상한을 계산할 때 가정하는 총알 속도(m/s).
+        ///
+        /// 총알 속도는 총마다 다르고 생성 시점에 알기 어렵습니다. 넉넉히 잡아 두면
+        /// 상한에 안 걸리고, 실제로 살아 있는 자국 수는 수명이 알아서 정합니다 —
+        /// maxParticles는 버퍼 크기일 뿐이라 넉넉해도 손해가 없습니다.
+        /// </summary>
+        private const float AssumedBulletSpeed = 110f;
+
+        /// <summary>자국 상한의 하한. 느린 탄·짧은 수명에서도 최소한은 보입니다.</summary>
+        private const int MinStampsPerBullet = 64;
 
         /// <summary>1m당 자국 수 상한. 총알이 길게 날아가도 총량이 터지지 않게 잡아 둡니다.</summary>
         private const float MaxStampRate = 20f;
@@ -105,14 +128,15 @@ namespace WeaponAura.Systems
         /// <summary>
         /// 총알 하나에 잔상을 붙입니다. 발사 패치에서 총알이 초기화된 직후에 부릅니다.
         /// </summary>
-        public static void Apply(Projectile? projectile, int ammoQuality)
+        /// <param name="weaponTypeId">쏜 무기의 TypeID. 전용 설정이 걸려 있으면 등급보다 우선합니다.</param>
+        public static void Apply(Projectile? projectile, int ammoQuality, int weaponTypeId = 0)
         {
             if (projectile == null || !BulletTrailSettings.Enabled)
                 return;
 
             try
             {
-                var profile = BulletTrailProfiles.Resolve(ammoQuality);
+                var profile = BulletTrailProfiles.Resolve(ammoQuality, weaponTypeId);
                 if (profile == null || !profile.enabled)
                 {
                     // 이 등급은 모드 잔상을 안 그립니다. 원본까지 숨기면 총알이 아무
@@ -123,7 +147,13 @@ namespace WeaponAura.Systems
                 }
 
                 // 원본 궤적은 모드 잔상이 실제로 대신 그려질 때만 숨깁니다.
-                VanillaTrailSuppressor.SetSuppressed(projectile, BulletTrailSettings.HideVanillaTrail);
+                //
+                // 몸체는 조건이 하나 더 붙습니다 — 우리가 총알 머리를 그릴 때만 숨깁니다.
+                // 머리를 안 그리는데 몸체까지 숨기면 총알이 아무 그림 없이 날아갑니다.
+                // (ConfigureHead의 판단과 같은 식이어야 합니다)
+                bool drawsHead = BulletTrailSettings.HideVanillaTrail && profile.headWidth > 0.0001f;
+                VanillaTrailSuppressor.SetSuppressed(
+                    projectile, BulletTrailSettings.HideVanillaTrail, drawsHead);
 
                 // 발광체는 잔상을 숨기는지와 무관합니다 — 자체 옵션으로만 갈립니다.
                 if (BulletTrailSettings.CustomizeGlow)
@@ -459,7 +489,8 @@ namespace WeaponAura.Systems
             var main = stamps.main;
             main.playOnAwake = false;
             main.loop = true;
-            main.maxParticles = MaxStampsPerBullet;
+            // 실제 값은 발사할 때 ConfigureStamps가 프로필에 맞춰 다시 정합니다.
+            main.maxParticles = MinStampsPerBullet;
 
             // 반드시 월드입니다. 로컬이면 자국이 총알을 따라다녀서
             // "지나간 자리에 남는다"가 성립하지 않습니다.
@@ -606,6 +637,12 @@ namespace WeaponAura.Systems
             var main = stamps.main;
             main.startLifetime = Mathf.Max(0.05f, profile.stampLife);
             main.startSize = profile.stampSize;
+
+            // 찍는 간격 × 수명 × 속도 = 동시에 살아 있을 자국 수. 이만큼은 담을 수 있어야
+            // 총알이 나아간 만큼 자국이 이어집니다.
+            float rate = Mathf.Clamp(profile.stampRate, 0f, MaxStampRate);
+            int needed = Mathf.CeilToInt(rate * Mathf.Max(0.05f, profile.stampLife) * AssumedBulletSpeed);
+            main.maxParticles = Mathf.Clamp(needed, MinStampsPerBullet, MaxStampsPerBullet);
 
             BulletTrailShading.Resolve(profile.colorStart, profile.intensity, profile.alpha,
                 out Color color, out float alpha);

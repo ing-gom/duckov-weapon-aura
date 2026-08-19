@@ -18,7 +18,8 @@ namespace WeaponAura.UI
     /// </summary>
     public partial class WeaponAuraWindowCanvas
     {
-        private const string SharePrefix = "WAURA1:";
+        /// <summary>예전 형식. 지금은 <see cref="ShareCodec"/>가 읽고 씁니다.</summary>
+        private const string SharePrefix = ShareCodec.LegacyPrefix;
 
         private void CopyProfileToClipboard()
         {
@@ -41,19 +42,26 @@ namespace WeaponAura.UI
             }
         }
 
-        private void PasteProfileFromClipboard()
+        /// <summary>
+        /// 코드 하나를 지금 편집 중인 프로필에 적용합니다.
+        ///
+        /// 예전에는 클립보드를 바로 읽어 그 자리에서 덮어썼습니다. 무엇이 들었는지 모르는
+        /// 채로 적용되니, 엉뚱한 것을 복사해 둔 상태에서 누르면 편집 중이던 설정이
+        /// 날아갔습니다. 지금은 붙여넣기 창이 코드를 보여 준 뒤 이 함수를 부릅니다.
+        /// </summary>
+        /// <returns>적용했으면 true. 실패하면 안내만 띄우고 false.</returns>
+        private bool ApplyShareCode(string? raw)
         {
             var target = CurrentProfile();
             if (target == null)
-                return;
+                return false;
 
-            string code = GUIUtility.systemCopyBuffer ?? "";
-            code = code.Trim();
+            string code = (raw ?? "").Trim();
 
             if (!code.StartsWith(SharePrefix, StringComparison.Ordinal))
             {
                 ShowHint(L.Share.NotFound);
-                return;
+                return false;
             }
 
             try
@@ -65,7 +73,7 @@ namespace WeaponAura.UI
                 if (incoming == null)
                 {
                     ShowHint(L.Share.Failed);
-                    return;
+                    return false;
                 }
 
                 // 등급 기준값·이름·추가 여부는 이 티어의 정체성입니다. 남의 설정을 받아도
@@ -84,11 +92,13 @@ namespace WeaponAura.UI
                 ApplyEdit(true);
 
                 ShowHint(string.Format(L.Share.Pasted, target.minLevel));
+                return true;
             }
             catch (Exception ex)
             {
                 UnityEngine.Debug.LogWarning($"[WeaponAura] 설정 붙여넣기 실패: {ex.Message}");
                 ShowHint(L.Share.Failed);
+                return false;
             }
         }
     }

@@ -44,7 +44,7 @@ namespace WeaponAura.Systems
     /// JsonUtility로 직렬화되므로 public 필드만 사용합니다.
     /// </summary>
     [Serializable]
-    public class WeaponAuraProfile
+    public class WeaponAuraProfile : ISerializationCallbackReceiver, ILayerHost
     {
         /// <summary>티어 표시 이름 (디버그 패널용)</summary>
         public string name = "";
@@ -107,12 +107,6 @@ namespace WeaponAura.Systems
         // ── 텍스처 / 렌더 ────────────────────────────────────
         /// <summary>assets/vfx_textures 안의 파일 이름(확장자 제외). 비어 있으면 내장 글로우 사용</summary>
         public string textureName = "";
-        /// <summary>플립북 가로 칸 수 (1이면 단일 이미지)</summary>
-        public int tilesX = 1;
-        /// <summary>플립북 세로 칸 수</summary>
-        public int tilesY = 1;
-        /// <summary>플립북 재생 속도. 0이면 파티클 수명에 맞춰 1회 재생</summary>
-        public float flipbookFps = 0f;
         /// <summary>색 밝기 배율 (가산 합성이라 1을 넘기면 더 발광함)</summary>
         public float colorIntensity = 1f;
         /// <summary>그리기 방식 (빌보드 / 늘림 / 리본)</summary>
@@ -223,6 +217,55 @@ namespace WeaponAura.Systems
         public float ringBobSpeed = 2f;
 
         /// <summary>깊은 복사</summary>
+        /// <summary>한 무기에 쌓을 수 있는 레이어 수의 상한.</summary>
+        public const int MaxLayers = LayerList.Max;
+
+        /// <summary>
+        /// 오라 위에 더 쌓는 알갱이 겹.
+        ///
+        /// 본체 오라(위의 값들)는 무기 메시를 읽어 실루엣을 감싸는 <b>한 벌</b>입니다.
+        /// 그것만으로는 "총구에서 불티가 튀고 무기 전체에 옅은 연기가 도는" 같은 조합을
+        /// 만들 수 없어서, 자리·색·모양이 제각각인 겹을 위에 얹을 수 있게 했습니다.
+        ///
+        /// 겹은 <b>본체 오라를 대체하지 않습니다.</b> 얹기만 합니다 — 그래서 지금까지
+        /// 쓰던 프로필은 겹이 0개인 상태로 그대로 동작합니다.
+        /// </summary>
+        /// <summary>
+        /// 실제로 쓰는 겹 목록. <b>직렬화 대상이 아닙니다.</b>
+        ///
+        /// Unity는 중첩된 사용자 정의 클래스 배열을 담지 못합니다. 저장 파일을 열어 보면
+        /// 프로필 필드 61개는 다 있는데 <c>layers</c>만 통째로 빠져 있었습니다 — 겹이
+        /// 저장되지 않던 이유이고, 동시에 "저장했는데 저장 안 했다는 창이 뜨는" 이유이기도
+        /// 했습니다(겹만 다른 설정이 기본값과 같다고 판정되어 정리 대상이 됐습니다).
+        ///
+        /// 그래서 저장 직전에 <see cref="layersJson"/>으로 옮겨 담고, 읽은 직후에 되돌립니다.
+        /// </summary>
+        [NonSerialized]
+        public WeaponEffectLayer[] layers = Array.Empty<WeaponEffectLayer>();
+
+        /// <summary>파일에 실제로 담기는 형태 — 겹 하나하나를 직렬화한 문자열.</summary>
+        public string[] layersJson = Array.Empty<string>();
+
+        /// <summary>저장 직전에 Unity가 부릅니다.</summary>
+        public void OnBeforeSerialize()
+        {
+            layersJson = ProfileJson.Pack(layers);
+        }
+
+        /// <summary>읽은 직후에 Unity가 부릅니다.</summary>
+        public void OnAfterDeserialize()
+        {
+            layers = ProfileJson.Unpack<WeaponEffectLayer>(layersJson);
+        }
+
+        public WeaponEffectLayer[] Layers => layers;
+        public int LayerLimit => LayerList.Max;
+        public Color LayerSeedColor => colorA;
+
+        public WeaponEffectLayer? AddLayer() => LayerList.Add(ref layers, colorA);
+        public bool RemoveLayer(int index) => LayerList.Remove(ref layers, index);
+        public WeaponEffectLayer? GetLayer(int index) => LayerList.Get(layers, index);
+
         public WeaponAuraProfile Clone()
         {
             var clone = new WeaponAuraProfile();
@@ -235,7 +278,15 @@ namespace WeaponAura.Systems
         {
             if (other == null)
                 return;
+
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(other), this);
+
+            // 겹은 직렬화에서 빠져 있으므로 따로 옮깁니다.
+            //
+            // Unity 콜백이 이 경로에서도 불리긴 하지만, 복사는 창을 열 때마다 도는 길이라
+            // 콜백 동작에 기대지 않고 눈에 보이게 처리합니다. 겹이 조용히 사라지면
+            // 원인을 찾기가 아주 어렵습니다 — 실제로 그래서 오래 헤맸습니다.
+            layers = LayerList.Clone(other.layers);
         }
 
         /// <summary>구조(Shape/링 구성)가 바뀌었는지 — 바뀌면 파티클 재생성이 필요합니다.</summary>
@@ -267,7 +318,32 @@ namespace WeaponAura.Systems
         [Serializable]
         private class ProfileSetData
         {
+            /// <summary>
+            /// 예전 형식. Unity가 이 배열을 저장하지 못해 늘 비어 있었습니다 —
+            /// 옛 파일을 읽을 때만 쓰고, 쓸 때는 아래 items에 담습니다.
+            /// </summary>
             public WeaponAuraProfile[] tiers = Array.Empty<WeaponAuraProfile>();
+
+            /// <summary>프로필 하나하나를 맨 위 객체로 직렬화한 문자열들.</summary>
+            public string[] items = Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// 저장본에서 프로필을 꺼냅니다. 새 형식(items)이 먼저이고, 없으면 옛 형식을 봅니다.
+        ///
+        /// 옛 형식은 사실상 늘 비어 있었지만(Unity가 못 담았습니다) 읽는 쪽을 남겨 두는
+        /// 비용이 거의 없고, 어딘가에서 담긴 파일이 있다면 그것까지 살릴 수 있습니다.
+        /// </summary>
+        private static WeaponAuraProfile[] Read(ProfileSetData? data)
+        {
+            if (data == null)
+                return Array.Empty<WeaponAuraProfile>();
+
+            var unpacked = ProfileJson.Unpack<WeaponAuraProfile>(data.items);
+            if (unpacked.Length > 0)
+                return unpacked;
+
+            return data.tiers ?? Array.Empty<WeaponAuraProfile>();
         }
 
         private static WeaponAuraProfile[]? _runtime;
@@ -860,22 +936,72 @@ namespace WeaponAura.Systems
         }
 
         /// <summary>저장 폴더 (모드 폴더 우선, 없으면 persistentDataPath)</summary>
+        /// <summary>
+        /// 설정을 저장할 폴더.
+        ///
+        /// <b>모드 폴더에 두면 안 됩니다.</b> 모드를 새로 설치하거나 창작마당이 갱신하면
+        /// 그 폴더는 <b>통째로 지워지고</b> 다시 만들어집니다(설치 스크립트도 게임의 갱신도
+        /// 그렇게 합니다). 사용자가 몇 시간 꾸민 설정이 업데이트 한 번에 사라집니다.
+        ///
+        /// 그래서 게임의 사용자 데이터 폴더에 둡니다. 모드를 지웠다 다시 깔아도 남습니다.
+        /// </summary>
         public static string GetSaveFolder()
         {
-            string? root = null;
             try
             {
-                root = Settings.AuraSettings.GetModRootPath();
+                string folder = Path.Combine(Application.persistentDataPath, "WeaponAura");
+                Directory.CreateDirectory(folder);
+                return folder;
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning($"[WeaponAura] 저장 폴더를 만들지 못했습니다: {ex.Message}");
+                return Application.persistentDataPath;
+            }
+        }
+
+        /// <summary>
+        /// 예전에 쓰던 저장 폴더(모드 폴더). 새 폴더에 파일이 없을 때만 여기서 읽어 옵니다.
+        ///
+        /// 옮기는 김에 지우지는 않습니다 — 사용자가 되돌리고 싶을 수 있고, 모드 폴더는
+        /// 어차피 다음 설치 때 정리됩니다.
+        /// </summary>
+        public static string? GetLegacySaveFolder()
+        {
+            try
+            {
+                string? root = Settings.AuraSettings.GetModRootPath();
+                return string.IsNullOrEmpty(root) || !Directory.Exists(root) ? null : root;
             }
             catch
             {
-                root = null;
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 읽을 파일의 경로. 새 폴더에 없으면 예전 폴더를 봅니다.
+        ///
+        /// 저장은 항상 새 폴더에만 하므로, 한 번 저장하면 자연스럽게 옮겨집니다.
+        /// </summary>
+        public static string ResolveReadPath(string fileName)
+        {
+            string current = Path.Combine(GetSaveFolder(), fileName);
+            if (File.Exists(current))
+                return current;
+
+            string? legacy = GetLegacySaveFolder();
+            if (legacy != null)
+            {
+                string old = Path.Combine(legacy, fileName);
+                if (File.Exists(old))
+                {
+                    UnityEngine.Debug.Log($"[WeaponAura] 예전 저장 위치에서 읽습니다: {old}");
+                    return old;
+                }
             }
 
-            if (string.IsNullOrEmpty(root) || !Directory.Exists(root))
-                root = Application.persistentDataPath;
-
-            return root!;
+            return current;
         }
 
         /// <summary>
@@ -891,14 +1017,55 @@ namespace WeaponAura.Systems
             return Path.Combine(GetSaveFolder(), fileName);
         }
 
+        /// <summary>
+        /// 지금 값을 문자열 하나로 떠 둡니다 (파일과 무관 — 되돌리기용).
+        ///
+        /// 창을 열 때 떠 두었다가, 저장하지 않고 닫으면 이걸로 되돌립니다. 필드를 하나씩
+        /// 복사하는 대신 직렬화를 쓰면 프로필에 항목이 추가돼도 저절로 따라옵니다.
+        /// </summary>
+        public static string Snapshot()
+        {
+            return JsonUtility.ToJson(new ProfileSetData { items = ProfileJson.Pack(Runtime) });
+        }
+
+        /// <summary>떠 둔 값으로 되돌립니다.</summary>
+        public static bool Restore(string json)
+        {
+            try
+            {
+                var data = JsonUtility.FromJson<ProfileSetData>(json);
+                var loaded = Read(data);
+                if (loaded.Length == 0)
+                    return false;
+
+                _runtime = loaded;
+                Repair(_runtime);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning($"[WeaponAura] 되돌리기 실패: {ex.Message}");
+                return false;
+            }
+        }
+
         /// <summary>현재 런타임 값을 JSON으로 저장합니다.</summary>
         public static bool Save(out string path, string? slot = null)
         {
             path = GetTuningPath(slot);
             try
             {
-                var data = new ProfileSetData { tiers = Runtime };
-                File.WriteAllText(path, JsonUtility.ToJson(data, true), Encoding.UTF8);
+                var data = new ProfileSetData { items = ProfileJson.Pack(Runtime) };
+                string json = JsonUtility.ToJson(data, true);
+
+                // 만들어진 문자열을 그대로 확인합니다. 저장 파일이 빈 값으로 나오던 원인을
+                // 가리기 위한 것입니다 — 여기서 이미 비어 있으면 직렬화 문제이고,
+                // 여기서는 멀쩡한데 파일이 비어 있으면 쓰기 문제입니다.
+                UnityEngine.Debug.Log(
+                    $"[WeaponAura] 저장 직렬화(오라): {json.Length}자, 항목 {Runtime.Length}개, " +
+                    $"앞부분={json.Substring(0, Mathf.Min(60, json.Length))}");
+
+                File.WriteAllText(path, json, Encoding.UTF8);
                 return true;
             }
             catch (Exception ex)
@@ -914,14 +1081,18 @@ namespace WeaponAura.Systems
             path = GetTuningPath(slot);
             try
             {
+                // 새 위치에 없으면 예전 위치(모드 폴더)에서 읽어 옵니다.
+                path = WeaponAuraProfiles.ResolveReadPath(TuningFileName);
+
                 if (!File.Exists(path))
                     return false;
 
                 var data = JsonUtility.FromJson<ProfileSetData>(File.ReadAllText(path, Encoding.UTF8));
-                if (data == null || data.tiers == null || data.tiers.Length == 0)
+                var loaded = Read(data);
+                if (loaded.Length == 0)
                     return false;
 
-                _runtime = data.tiers;
+                _runtime = loaded;
                 Repair(_runtime);
                 return true;
             }
@@ -1012,9 +1183,6 @@ namespace WeaponAura.Systems
                 sb.AppendLine($"    noiseFrequency = {F(p.noiseFrequency)},");
                 sb.AppendLine($"    noiseScroll = {F(p.noiseScroll)},");
                 sb.AppendLine($"    textureName = \"{p.textureName}\",");
-                sb.AppendLine($"    tilesX = {p.tilesX},");
-                sb.AppendLine($"    tilesY = {p.tilesY},");
-                sb.AppendLine($"    flipbookFps = {F(p.flipbookFps)},");
                 sb.AppendLine($"    colorIntensity = {F(p.colorIntensity)},");
                 sb.AppendLine($"    renderStyle = WeaponAuraRenderStyle.{p.renderStyle},");
                 sb.AppendLine($"    stretchLength = {F(p.stretchLength)},");

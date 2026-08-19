@@ -209,7 +209,32 @@ namespace WeaponAura.Systems
         [Serializable]
         private class ProfileSetData
         {
+            /// <summary>
+            /// 예전 형식. Unity가 이 배열을 저장하지 못해 늘 비어 있었습니다 —
+            /// 옛 파일을 읽을 때만 쓰고, 쓸 때는 아래 items에 담습니다.
+            /// </summary>
             public BulletTrailProfile[] grades = Array.Empty<BulletTrailProfile>();
+
+            /// <summary>프로필 하나하나를 맨 위 객체로 직렬화한 문자열들.</summary>
+            public string[] items = Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// 저장본에서 프로필을 꺼냅니다. 새 형식(items)이 먼저이고, 없으면 옛 형식을 봅니다.
+        ///
+        /// 옛 형식은 사실상 늘 비어 있었지만(Unity가 못 담았습니다) 읽는 쪽을 남겨 두는
+        /// 비용이 거의 없고, 어딘가에서 담긴 파일이 있다면 그것까지 살릴 수 있습니다.
+        /// </summary>
+        private static BulletTrailProfile[] Read(ProfileSetData? data)
+        {
+            if (data == null)
+                return Array.Empty<BulletTrailProfile>();
+
+            var unpacked = ProfileJson.Unpack<BulletTrailProfile>(data.items);
+            if (unpacked.Length > 0)
+                return unpacked;
+
+            return data.grades ?? Array.Empty<BulletTrailProfile>();
         }
 
         private static BulletTrailProfile[]? _runtime;
@@ -383,6 +408,18 @@ namespace WeaponAura.Systems
         /// 가장 낮은 등급의 기준값보다 낮아도 첫 프로필을 씁니다 — 등급 0짜리 탄약만
         /// 잔상이 통째로 사라지면 "왜 이 총만 안 되지"가 됩니다.
         /// </summary>
+        /// <summary>
+        /// 이 무기가 쏜 총알에 쓸 잔상 프로필.
+        ///
+        /// 무기 전용(또는 분류 전용) 설정이 있으면 그것이 이깁니다. 없으면 기존대로
+        /// 등급으로 고릅니다 — 전용 설정을 안 만든 사람 화면은 그대로입니다.
+        /// </summary>
+        public static BulletTrailProfile? Resolve(int quality, int weaponTypeId)
+        {
+            var over = WeaponOverrides.Resolve(weaponTypeId);
+            return over != null ? over.trail : Resolve(quality);
+        }
+
         public static BulletTrailProfile? Resolve(int quality)
         {
             var grades = Runtime;
@@ -436,8 +473,17 @@ namespace WeaponAura.Systems
             path = GetTuningPath();
             try
             {
-                var data = new ProfileSetData { grades = Runtime };
-                File.WriteAllText(path, JsonUtility.ToJson(data, true), Encoding.UTF8);
+                var data = new ProfileSetData { items = ProfileJson.Pack(Runtime) };
+                string json = JsonUtility.ToJson(data, true);
+
+                // 만들어진 문자열을 그대로 확인합니다. 저장 파일이 빈 값으로 나오던 원인을
+                // 가리기 위한 것입니다 — 여기서 이미 비어 있으면 직렬화 문제이고,
+                // 여기서는 멀쩡한데 파일이 비어 있으면 쓰기 문제입니다.
+                UnityEngine.Debug.Log(
+                    $"[WeaponAura] 저장 직렬화(잔상): {json.Length}자, 항목 {Runtime.Length}개, " +
+                    $"앞부분={json.Substring(0, Mathf.Min(60, json.Length))}");
+
+                File.WriteAllText(path, json, Encoding.UTF8);
                 return true;
             }
             catch (Exception ex)
@@ -447,19 +493,49 @@ namespace WeaponAura.Systems
             }
         }
 
+        /// <summary>지금 값을 문자열 하나로 떠 둡니다 (되돌리기용).</summary>
+        public static string Snapshot()
+        {
+            return JsonUtility.ToJson(new ProfileSetData { items = ProfileJson.Pack(Runtime) });
+        }
+
+        /// <summary>떠 둔 값으로 되돌립니다.</summary>
+        public static bool Restore(string json)
+        {
+            try
+            {
+                var data = JsonUtility.FromJson<ProfileSetData>(json);
+                var loaded = Read(data);
+                if (loaded.Length == 0)
+                    return false;
+
+                _runtime = loaded;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning($"[WeaponAura] 탄환 잔상 되돌리기 실패: {ex.Message}");
+                return false;
+            }
+        }
+
         public static bool Load(out string path)
         {
             path = GetTuningPath();
             try
             {
+                // 새 위치에 없으면 예전 위치(모드 폴더)에서 읽어 옵니다.
+                path = WeaponAuraProfiles.ResolveReadPath(TuningFileName);
+
                 if (!File.Exists(path))
                     return false;
 
                 var data = JsonUtility.FromJson<ProfileSetData>(File.ReadAllText(path, Encoding.UTF8));
-                if (data == null || data.grades == null || data.grades.Length == 0)
+                var loaded = Read(data);
+                if (loaded.Length == 0)
                     return false;
 
-                _runtime = data.grades;
+                _runtime = loaded;
                 return true;
             }
             catch (Exception ex)

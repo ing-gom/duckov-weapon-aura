@@ -44,9 +44,30 @@ namespace WeaponAura.Systems
             new Dictionary<Projectile, TrailRenderer[]>();
 
         /// <summary>
-        /// 이 총알의 원본 궤적을 숨길지 정합니다. 발사될 때마다 부릅니다.
+        /// 총알 인스턴스별 <b>몸체 그림</b>. 궤적과 따로 관리합니다.
+        ///
+        /// 궤적을 숨기는 것과 몸체를 숨기는 것은 조건이 다릅니다. 모드가 자기 총알 머리를
+        /// 그릴 때만 몸체를 숨겨야 하고, 머리를 안 그리는데 몸체까지 숨기면 총알이 아무것도
+        /// 없이 날아갑니다.
+        ///
+        /// TrailRenderer는 뺍니다 — 그건 위쪽이 담당합니다. 빛(SodaPointLight)은 Renderer가
+        /// 아니라 여기 안 걸립니다. 그건 의도한 것입니다.
         /// </summary>
-        public static void SetSuppressed(Projectile? projectile, bool suppress)
+        private static readonly Dictionary<Projectile, Renderer[]> _bodies =
+            new Dictionary<Projectile, Renderer[]>();
+
+        /// <summary>
+        /// 이 총알의 원본 그림을 숨길지 정합니다. 발사될 때마다 부릅니다.
+        /// </summary>
+        /// <param name="suppress">원본 궤적(선)을 숨길지</param>
+        /// <param name="suppressBody">
+        /// 원본 총알 몸체까지 숨길지.
+        ///
+        /// 모드가 자기 총알 머리를 그릴 때만 true입니다. 안 그러면 원본 몸체와 모드 머리가
+        /// 겹쳐서 두 개로 보입니다 — 특히 속성이 붙은 총(프로스트 등)은 몸체 쪽에 속성
+        /// 색·장식이 들어가 있어서 겹친 티가 확 납니다.
+        /// </param>
+        public static void SetSuppressed(Projectile? projectile, bool suppress, bool suppressBody = false)
         {
             if (projectile == null)
                 return;
@@ -66,6 +87,20 @@ namespace WeaponAura.Systems
 
                     trail.enabled = !suppress;
                 }
+
+                if (!_bodies.TryGetValue(projectile, out var bodies))
+                {
+                    bodies = CollectBodies(projectile);
+                    _bodies[projectile] = bodies;
+                }
+
+                foreach (var body in bodies)
+                {
+                    if (body == null)
+                        continue;
+
+                    body.enabled = !suppressBody;
+                }
             }
             catch (Exception ex)
             {
@@ -76,7 +111,7 @@ namespace WeaponAura.Systems
         }
 
         /// <summary>이 총알의 원본 궤적을 되돌립니다.</summary>
-        public static void Restore(Projectile? projectile) => SetSuppressed(projectile, false);
+        public static void Restore(Projectile? projectile) => SetSuppressed(projectile, false, false);
 
         /// <summary>
         /// 꺼 둔 원본 궤적을 모두 되돌리고 캐시를 비웁니다.
@@ -107,6 +142,53 @@ namespace WeaponAura.Systems
             }
 
             _trails.Clear();
+
+            foreach (var pair in _bodies)
+            {
+                foreach (var body in pair.Value)
+                {
+                    if (body == null)
+                        continue;
+
+                    try
+                    {
+                        body.enabled = true;
+                    }
+                    catch
+                    {
+                        // 파괴 중인 오브젝트. 되돌릴 대상이 아닙니다.
+                    }
+                }
+            }
+
+            _bodies.Clear();
+        }
+
+        /// <summary>
+        /// 처음 봤을 때 켜져 있던 <b>몸체 그림</b>을 모읍니다.
+        ///
+        /// 필드(<c>Projectile.mesh</c>) 하나만 보지 않고 계층을 훑는 이유는 궤적 쪽과
+        /// 같습니다 — 속성이 붙은 총알은 몸체 말고도 장식용 그림이 자식으로 더 달려 있고,
+        /// 그것이 필드로 참조된다는 보장이 없습니다. 실제로 그 장식이 모드 머리와 겹쳐
+        /// 보이는 것이 이 함수가 생긴 이유입니다.
+        ///
+        /// TrailRenderer는 뺍니다(위쪽 담당). 빛은 Renderer가 아니라 애초에 안 걸립니다.
+        /// </summary>
+        private static Renderer[] CollectBodies(Projectile projectile)
+        {
+            var found = projectile.GetComponentsInChildren<Renderer>(true);
+
+            var kept = new List<Renderer>(found.Length);
+            foreach (var renderer in found)
+            {
+                if (renderer == null || renderer is TrailRenderer)
+                    continue;
+
+                if (renderer.enabled)
+                    kept.Add(renderer);
+            }
+
+            return kept.ToArray();
         }
 
         /// <summary>처음 봤을 때 켜져 있던 자식 TrailRenderer만 모읍니다.</summary>

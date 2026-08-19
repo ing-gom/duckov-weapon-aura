@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using WeaponAura.Helpers;
 using WeaponAura.Systems;
 using Ducky.Sdk.Localizations;
 
@@ -45,6 +46,47 @@ namespace WeaponAura.UI
 
         /// <summary>무대를 만들 때 기준이 된 무기 — 바뀌면 무대를 다시 만듭니다.</summary>
         private Component? _sourceAgent;
+
+        /// <summary>카탈로그에서 만든 모델 (손에 없는 무기를 볼 때). 무대와 함께 정리됩니다.</summary>
+        private WeaponModelHandle? _catalogModel;
+
+        /// <summary>무대를 만들 때 기준이 된 카탈로그 무기 TypeID</summary>
+        private int _sourceTypeId;
+
+        /// <summary>
+        /// 이 무기를 대신 보여 줍니다 (0이면 지금 든 무기).
+        ///
+        /// 무기별 설정을 편집할 때는 그 무기가 보여야 합니다 — 손에 든 다른 총에
+        /// 편집 중인 색이 칠해져 있으면 무엇을 고치고 있는지 알 수 없습니다.
+        /// </summary>
+        public int TargetWeaponTypeId { get; set; }
+
+        /// <summary>
+        /// 미리보기에 세운 겹. 값만 바뀔 때 무대를 다시 세우지 않고 여기에 바로 씁니다.
+        ///
+        /// 슬라이더를 끄는 동안 무대를 매번 다시 세우면 모델 복제가 프레임마다 일어납니다.
+        /// </summary>
+        private readonly List<(ParticleSystem Particles, WeaponEffectLayer Source)> _extraLayers =
+            new List<(ParticleSystem, WeaponEffectLayer)>();
+
+        private Vector3 _extraLayerBounds = Vector3.one * 0.2f;
+
+        /// <summary>겹을 세운 뒤 실측을 남길 시각 (0이면 예약 없음)</summary>
+        private float _layerDiagnoseAt;
+
+        /// <summary>복제본에서 되찾은 총구. 없으면 바운즈 앞쪽으로 대신합니다.</summary>
+        private Transform? _muzzle;
+
+        /// <summary>지금 뿜는 자리를 보여 주는 표식들. 위치 조정 모드에서만 켭니다.</summary>
+        private readonly List<GameObject> _gizmos = new List<GameObject>();
+
+        /// <summary>
+        /// 표식을 보여 줄지.
+        ///
+        /// 늘 켜 두지 않습니다 — 연출을 확인하는 화면에 조준선이 겹쳐 있으면 색과 밝기를
+        /// 판단할 수 없습니다. 위치를 만질 때만 켭니다.
+        /// </summary>
+        public bool ShowGizmos { get; set; }
 
         private int _layer = -1;
         private Bounds _bounds;
@@ -134,6 +176,8 @@ namespace WeaponAura.UI
                     DestroyStage();
                     return null;
                 }
+
+                RunLayerDiagnoseIfDue();
 
                 if (AutoRotate)
                     Yaw += Time.unscaledDeltaTime * 22f;
@@ -270,6 +314,9 @@ namespace WeaponAura.UI
 
         private bool EnsureStage(WeaponAuraProfile profile, float intensity)
         {
+            if (TargetWeaponTypeId > 0)
+                return EnsureCatalogStage(profile, intensity);
+
             var player = CharacterMainControl.Main;
             var holder = player != null ? player.agentHolder : null;
             var agent = holder != null ? holder.CurrentHoldItemAgent : null;
@@ -311,6 +358,16 @@ namespace WeaponAura.UI
                     sourcePaths.Add(path);
             }
 
+            // 총구도 같은 방법으로 기억합니다.
+            //
+            // 복제본에는 총구 <b>오브젝트</b>가 그대로 남아 있습니다. 사라지는 것은
+            // ItemAgent_Gun.muzzle이라는 <b>참조</b>뿐입니다(StripClone이 스크립트를 지웁니다).
+            // 그래서 실루엣과 똑같이 경로로 적어 두었다가 복제본에서 다시 찾으면
+            // 총구 자리가 근사치가 아니라 실제 위치가 됩니다.
+            string? muzzlePath = null;
+            if (agent is ItemAgent_Gun gun && gun.muzzle != null)
+                muzzlePath = PathFrom(model, gun.muzzle);
+
             var root = new GameObject("WeaponAura_PreviewStage");
             UnityEngine.Object.DontDestroyOnLoad(root);
 
@@ -333,6 +390,8 @@ namespace WeaponAura.UI
             StripClone(clone);
             SetLayerRecursive(clone.transform, _layer);
 
+            _muzzle = string.IsNullOrEmpty(muzzlePath) ? null : clone.transform.Find(muzzlePath);
+
             // 모델 기준으로 다시 가운데를 맞춥니다 (발밑이 아니라 무기 근처가 중심이 되도록)
             var weaponRenderers = ResolveRenderers(clone.transform, sourcePaths);
 
@@ -348,6 +407,109 @@ namespace WeaponAura.UI
             BuildAura(weaponRenderers, profile, intensity);
             Status = "-";
             return true;
+        }
+
+        /// <summary>
+        /// 손에 없는 무기의 무대.
+        ///
+        /// 든 무기 쪽은 플레이어 모델을 통째로 복제해서 그중 무기 부품을 골라내지만,
+        /// 여기서는 <see cref="WeaponModelSource"/>가 무기 모델만 만들어 주므로
+        /// 그 안의 렌더러가 곧 무기 실루엣입니다.
+        /// </summary>
+        private bool EnsureCatalogStage(WeaponAuraProfile profile, float intensity)
+        {
+            if (_stage != null && _sourceTypeId == TargetWeaponTypeId && _catalogModel != null)
+                return true;
+
+            DestroyStage();
+
+            var root = new GameObject("WeaponAura_PreviewStage");
+            UnityEngine.Object.DontDestroyOnLoad(root);
+
+            // 플레이어가 있으면 그 자리의 조명을 그대로 받게 두고, 없으면 원점에 세웁니다.
+            var player = CharacterMainControl.Main;
+            root.transform.position = player != null ? player.transform.position : Vector3.zero;
+            root.transform.rotation = Quaternion.identity;
+
+            var pivot = new GameObject("Pivot").transform;
+            pivot.SetParent(root.transform, false);
+
+            var handle = WeaponModelSource.Create(TargetWeaponTypeId, pivot);
+            if (handle == null)
+            {
+                UnityEngine.Object.Destroy(root);
+                Status = L.Preview.NoModel;
+
+                UnityEngine.Debug.LogWarning(
+                    $"[WeaponAura] 개별 무기 미리보기 실패: TypeID {TargetWeaponTypeId} " +
+                    $"({WeaponAura.Helpers.WeaponHelper.GetDisplayName(TargetWeaponTypeId)}) — 모델을 못 만들었습니다.");
+                return false;
+            }
+
+            UnityEngine.Debug.Log(
+                $"[WeaponAura] 개별 무기 미리보기: " +
+                $"{WeaponAura.Helpers.WeaponHelper.GetDisplayName(TargetWeaponTypeId)} " +
+                $"(TypeID {TargetWeaponTypeId}) 경로={handle.Source} " +
+                $"자리표시자={handle.IsPlaceholder}");
+
+            _stage = root;
+            _pivot = pivot;
+            _catalogModel = handle;
+            _sourceTypeId = TargetWeaponTypeId;
+            _sourceAgent = null;
+
+            var model = handle.Model;
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.identity;
+
+            // 임시로 만든 아이템 본체는 화면에 안 나오지만 로직이 돌 수 있습니다.
+            // 모델 쪽만 정리하고 아이템은 Dispose가 통째로 걷어 갑니다.
+            StripClone(model);
+            SetLayerRecursive(model.transform, _layer);
+
+            var weaponRenderers = CollectRenderers(model.transform);
+
+            _bounds = MeasureBounds(root.transform, weaponRenderers, model.transform);
+
+            if (weaponRenderers.Count == 0)
+            {
+                Status = L.Preview.NoParts;
+                _builtLayers = 0;
+                return true;
+            }
+
+            BuildAura(weaponRenderers, profile, intensity);
+            Status = "-";
+            return true;
+        }
+
+        /// <summary>모델 안의 무기 렌더러 전부 (파티클·트레일 제외)</summary>
+        private static List<Renderer> CollectRenderers(Transform root)
+        {
+            var result = new List<Renderer>();
+
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer == null || renderer is ParticleSystemRenderer || renderer is TrailRenderer)
+                    continue;
+
+                Mesh? mesh = null;
+                if (renderer is SkinnedMeshRenderer skinned)
+                {
+                    mesh = skinned.sharedMesh;
+                }
+                else
+                {
+                    var filter = renderer.GetComponent<MeshFilter>();
+                    if (filter != null)
+                        mesh = filter.sharedMesh;
+                }
+
+                if (mesh != null && mesh.vertexCount > 0)
+                    result.Add(renderer);
+            }
+
+            return result;
         }
 
         /// <summary>플레이어 캐릭터 모델의 루트. 무기는 손 소켓에 붙어 있어 같이 복제됩니다.</summary>
@@ -504,6 +666,96 @@ namespace WeaponAura.UI
 
             _controller = controller;
             _builtLayers = Mathf.Max(1, profile.sheetLayers);
+
+            BuildExtraLayers(rootObject.transform, profile, localBounds);
+        }
+
+        /// <summary>
+        /// 오라 위에 얹은 겹을 미리보기에도 세웁니다.
+        ///
+        /// 겹은 게임에서 <see cref="WeaponAuraLayerSystem"/>이 <b>든 무기</b>에 붙입니다.
+        /// 미리보기는 자기 무대를 따로 세우므로 그것이 따라오지 않아서, 겹을 추가해도
+        /// 미리보기에는 아무 변화가 없었습니다. 같은 함수로 여기서도 만듭니다.
+        ///
+        /// 자리(총구·총열)는 무대에 없습니다 — 복제본에는 ItemAgent도 소켓도 없습니다.
+        /// 그래서 전부 무기 바운즈 기준으로 놓습니다. 무기 전체는 그대로 맞고, 총구·총열은
+        /// 앞쪽 끝으로 근사합니다. 정확한 자리는 게임 화면에서 확인해야 합니다.
+        /// </summary>
+        private void BuildExtraLayers(Transform root, WeaponAuraProfile profile, Bounds localBounds)
+        {
+            _extraLayerBounds = localBounds.size;
+
+            if (profile.layers.Length == 0)
+                return;
+
+            int made = 0;
+            int skipped = 0;
+            var reasons = new StringBuilder();
+
+            foreach (var layer in profile.layers)
+            {
+                // 왜 건너뛰었는지 남깁니다. "0개 세움"만 보이면 원인을 알 수 없습니다.
+                if (layer == null)
+                {
+                    skipped++;
+                    reasons.Append(" [null]");
+                    continue;
+                }
+
+                if (!layer.enabled)
+                {
+                    skipped++;
+                    reasons.Append($" [{layer.anchor} 꺼짐]");
+                    continue;
+                }
+
+                Transform parent = root;
+                Vector3 position = localBounds.center;
+
+                if (layer.anchor == WeaponParticleAnchor.Muzzle && _muzzle != null)
+                {
+                    // 되찾은 진짜 총구에 붙입니다 — 게임과 같은 자리입니다.
+                    parent = _muzzle;
+                    position = Vector3.zero;
+                }
+                else if (layer.anchor == WeaponParticleAnchor.Muzzle
+                         || layer.anchor == WeaponParticleAnchor.Barrel)
+                {
+                    // 총열은 게임에서도 바운즈로 계산하므로 여기서도 같은 규칙입니다.
+                    position += new Vector3(0f, 0f, localBounds.size.z * 0.5f);
+                }
+
+                try
+                {
+                    // 무대는 모델을 제자리에서 돌립니다. 월드로 두면 알갱이가 그 회전을
+                    // 따라 고리로 번져서 실제 게임과 다른 그림이 됩니다.
+                    var go = WeaponAuraLayerSystem.CreateEmitter(
+                        layer, parent, position, localBounds.size, out var particles,
+                        localSpace: true);
+
+                    // 무대만 찍는 카메라에 잡히도록 레이어를 옮깁니다.
+                    SetLayerRecursive(go.transform, _layer);
+
+                    _extraLayers.Add((particles, layer));
+                    made++;
+
+                    BuildGizmo(parent, position + layer.offset, layer, localBounds.size);
+                }
+                catch (Exception ex)
+                {
+                    UnityEngine.Debug.LogWarning($"[WeaponAura] 미리보기 겹 생성 실패: {ex.Message}");
+                }
+            }
+
+            // 뿜기 시작할 시간을 준 뒤 실제 상태를 한 번 더 남깁니다.
+            _layerDiagnoseAt = Time.unscaledTime + 1f;
+
+            // "안 만들어졌다"와 "만들어졌는데 안 보인다"를 로그로 가릅니다.
+            UnityEngine.Debug.Log(
+                $"[WeaponAura] 미리보기 겹: {made}/{profile.layers.Length}개 세움 " +
+                $"(건너뜀 {skipped}{reasons}) " +
+                $"| 레이어={_layer} 바운즈={localBounds.size} 중심={localBounds.center} " +
+                $"| 무대위치={root.position}");
         }
 
         /// <summary>지정한 렌더러들을 감싸는 바운즈를 기준 트랜스폼의 로컬 좌표로 구합니다.</summary>
@@ -628,8 +880,149 @@ namespace WeaponAura.UI
                 _stage = null;
             }
 
+            // 카탈로그 모델은 임시 아이템까지 함께 들고 있습니다. 무대만 지우고 놔두면
+            // 그 아이템이 씬에 남습니다.
+            if (_catalogModel != null)
+            {
+                _catalogModel.Dispose();
+                _catalogModel = null;
+            }
+
+            _extraLayers.Clear();
+            _muzzle = null;
+
+            foreach (var gizmo in _gizmos)
+            {
+                if (gizmo != null)
+                    UnityEngine.Object.Destroy(gizmo);
+            }
+
+            _gizmos.Clear();
+
+            // 예약해 둔 실측을 그대로 두면 파괴된 이미터를 재서 "재생=False 살아있음=0"이
+            // 찍힙니다. 실제로는 무대가 사라진 것인데 겹이 죽은 것처럼 읽힙니다.
+            _layerDiagnoseAt = 0f;
+
             _pivot = null;
             _sourceAgent = null;
+            _sourceTypeId = 0;
+        }
+
+        /// <summary>
+        /// 겹의 값만 바뀌었을 때 — 무대를 다시 세우지 않고 즉시 덮어씁니다.
+        ///
+        /// 겹이 늘거나 자리·모양이 바뀌면 이걸로는 부족합니다. 그때는 호출부가
+        /// <see cref="RequestRebuild"/>를 부릅니다.
+        /// </summary>
+        /// <summary>
+        /// 뿜는 자리와 범위를 눈에 보이게 세웁니다.
+        ///
+        /// 숫자만으로는 조준이 안 됩니다 — 어디서 나오는지 안 보이는 채로 슬라이더를
+        /// 옮기고 결과를 보고 다시 옮기는 식이 됩니다. 가운데 점은 <b>자리</b>,
+        /// 둘레 상자·구는 <b>범위</b>입니다.
+        ///
+        /// 큐브 하나로 둘 다 만듭니다. 선(LineRenderer)으로 그리면 굵기·정렬을 카메라
+        /// 거리마다 다시 맞춰야 하는데, 반투명 상자는 그냥 스케일만 주면 됩니다.
+        /// </summary>
+        private void BuildGizmo(Transform parent, Vector3 localPosition,
+            WeaponEffectLayer layer, Vector3 weaponSize)
+        {
+            if (!ShowGizmos)
+                return;
+
+            try
+            {
+                // 자리 — 작은 밝은 점
+                var center = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                center.name = "WeaponAura_GizmoCenter";
+                StripGizmo(center, new Color(1f, 0.95f, 0.3f, 0.95f));
+                center.transform.SetParent(parent, false);
+                center.transform.localPosition = localPosition;
+                center.transform.localScale = Vector3.one * 0.03f;
+                SetLayerRecursive(center.transform, _layer);
+                _gizmos.Add(center);
+
+                // 범위 — 방출 영역과 같은 크기의 반투명 덩어리
+                Vector3 size = layer.anchor == WeaponParticleAnchor.Whole
+                    ? weaponSize * (1f + Mathf.Max(0f, layer.spread))
+                    : Vector3.one * Mathf.Max(0.01f, layer.spread) * 2f;
+
+                var range = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                range.name = "WeaponAura_GizmoRange";
+                StripGizmo(range, new Color(0.3f, 0.8f, 1f, 0.12f));
+                range.transform.SetParent(parent, false);
+                range.transform.localPosition = localPosition;
+                range.transform.localScale = size;
+                SetLayerRecursive(range.transform, _layer);
+                _gizmos.Add(range);
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning($"[WeaponAura] 표식 생성 실패: {ex.Message}");
+            }
+        }
+
+        /// <summary>표식에서 충돌체를 떼고 반투명 재질을 입힙니다.</summary>
+        private static void StripGizmo(GameObject go, Color color)
+        {
+            var collider = go.GetComponent<Collider>();
+            if (collider != null)
+                UnityEngine.Object.DestroyImmediate(collider);
+
+            var renderer = go.GetComponent<Renderer>();
+            if (renderer == null)
+                return;
+
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+
+            // 오라가 쓰는 머티리얼을 복제해서 색만 바꿉니다 — 셰이더를 새로 찾지 않아도
+            // 이 빌드에 확실히 있는 것을 쓰게 됩니다.
+            var source = WeaponAuraResources.SharedMaterial;
+            if (source != null)
+            {
+                var material = new Material(source);
+                material.color = color;
+                renderer.sharedMaterial = material;
+            }
+        }
+
+        /// <summary>예약해 둔 겹 실측을 때가 되면 남깁니다. Render에서 부릅니다.</summary>
+        private void RunLayerDiagnoseIfDue()
+        {
+            if (_layerDiagnoseAt <= 0f || Time.unscaledTime < _layerDiagnoseAt)
+                return;
+
+            _layerDiagnoseAt = 0f;
+
+            var sb = new StringBuilder("[WeaponAura] 겹 실측(미리보기)");
+            sb.Append(" 카메라마스크=").Append(_camera != null ? _camera.cullingMask.ToString() : "-");
+
+            foreach (var entry in _extraLayers)
+            {
+                sb.AppendLine().Append(WeaponAuraLayerSystem.DescribeEmitter(
+                    entry.Particles, entry.Source != null ? entry.Source.anchor.ToString() : "-"));
+            }
+
+            UnityEngine.Debug.Log(sb.ToString());
+        }
+
+        public void ApplyLayerValues()
+        {
+            foreach (var entry in _extraLayers)
+            {
+                if (entry.Particles == null || entry.Source == null)
+                    continue;
+
+                try
+                {
+                    WeaponAuraLayerSystem.ApplyTo(entry.Particles, entry.Source, _extraLayerBounds);
+                }
+                catch
+                {
+                    // 미리보기 한 겹 때문에 창이 멈추면 안 됩니다.
+                }
+            }
         }
 
         /// <summary>진단용 요약</summary>

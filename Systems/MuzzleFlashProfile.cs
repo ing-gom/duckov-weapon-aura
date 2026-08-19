@@ -10,7 +10,7 @@ namespace WeaponAura.Systems
     /// JsonUtility로 직렬화되므로 public 필드만 사용합니다.
     /// </summary>
     [Serializable]
-    public class MuzzleFlashProfile
+    public class MuzzleFlashProfile : ISerializationCallbackReceiver, ILayerHost
     {
         public string name = "";
 
@@ -85,6 +85,38 @@ namespace WeaponAura.Systems
         /// </summary>
         public bool sparkStretch = true;
 
+        // ── 레이어 ──────────────────────────────────────────────
+        //
+        // 본체 이펙트 위에 얹는 알갱이입니다. 본체는 한 벌이라 "여기에 불티도 조금"
+        // 같은 조합을 만들 수 없어서, 자리·색·모양이 제각각인 레이어를 더 쌓습니다.
+        //
+        // 배열은 직렬화에서 빠집니다(Unity가 중첩된 사용자 정의 클래스를 담지 못합니다).
+        // 저장 직전에 문자열로 옮겨 담고 읽은 직후에 되돌립니다 — 오라와 같은 방식입니다.
+
+        [NonSerialized]
+        public WeaponEffectLayer[] layers = Array.Empty<WeaponEffectLayer>();
+
+        /// <summary>파일에 실제로 담기는 형태.</summary>
+        public string[] layersJson = Array.Empty<string>();
+
+        public void OnBeforeSerialize()
+        {
+            layersJson = ProfileJson.Pack(layers);
+        }
+
+        public void OnAfterDeserialize()
+        {
+            layers = ProfileJson.Unpack<WeaponEffectLayer>(layersJson);
+        }
+
+        public WeaponEffectLayer[] Layers => layers;
+        public int LayerLimit => LayerList.Max;
+        public Color LayerSeedColor => colorOuter;
+
+        public WeaponEffectLayer? AddLayer() => LayerList.Add(ref layers, colorOuter);
+        public bool RemoveLayer(int index) => LayerList.Remove(ref layers, index);
+        public WeaponEffectLayer? GetLayer(int index) => LayerList.Get(layers, index);
+
         public MuzzleFlashProfile Clone()
         {
             var clone = new MuzzleFlashProfile();
@@ -96,7 +128,11 @@ namespace WeaponAura.Systems
         {
             if (other == null)
                 return;
+
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(other), this);
+
+            // 레이어는 직렬화에서 빠져 있으므로 따로 옮깁니다.
+            layers = LayerList.Clone(other.layers);
         }
     }
 
@@ -124,7 +160,32 @@ namespace WeaponAura.Systems
         private class ProfileSetData
         {
             public int version;
+            /// <summary>
+            /// 예전 형식. Unity가 이 배열을 저장하지 못해 늘 비어 있었습니다 —
+            /// 옛 파일을 읽을 때만 쓰고, 쓸 때는 아래 items에 담습니다.
+            /// </summary>
             public MuzzleFlashProfile[] grades = Array.Empty<MuzzleFlashProfile>();
+
+            /// <summary>프로필 하나하나를 맨 위 객체로 직렬화한 문자열들.</summary>
+            public string[] items = Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// 저장본에서 프로필을 꺼냅니다. 새 형식(items)이 먼저이고, 없으면 옛 형식을 봅니다.
+        ///
+        /// 옛 형식은 사실상 늘 비어 있었지만(Unity가 못 담았습니다) 읽는 쪽을 남겨 두는
+        /// 비용이 거의 없고, 어딘가에서 담긴 파일이 있다면 그것까지 살릴 수 있습니다.
+        /// </summary>
+        private static MuzzleFlashProfile[] Read(ProfileSetData? data)
+        {
+            if (data == null)
+                return Array.Empty<MuzzleFlashProfile>();
+
+            var unpacked = ProfileJson.Unpack<MuzzleFlashProfile>(data.items);
+            if (unpacked.Length > 0)
+                return unpacked;
+
+            return data.grades ?? Array.Empty<MuzzleFlashProfile>();
         }
 
         private static MuzzleFlashProfile[]? _runtime;
@@ -397,6 +458,18 @@ namespace WeaponAura.Systems
         }
 
         /// <summary>탄환 등급에 해당하는 프로필. 가장 낮은 등급보다 낮아도 첫 프로필을 씁니다.</summary>
+        /// <summary>
+        /// 이 무기의 총구 화염 프로필.
+        ///
+        /// 무기 전용(또는 분류 전용) 설정이 있으면 그것이 이깁니다. 없으면 기존대로
+        /// 등급으로 고릅니다 — 전용 설정을 안 만든 사람 화면은 그대로입니다.
+        /// </summary>
+        public static MuzzleFlashProfile? Resolve(int quality, int weaponTypeId)
+        {
+            var over = WeaponOverrides.Resolve(weaponTypeId);
+            return over != null ? over.muzzle : Resolve(quality);
+        }
+
         public static MuzzleFlashProfile? Resolve(int quality)
         {
             var grades = Runtime;
@@ -449,8 +522,17 @@ namespace WeaponAura.Systems
             path = GetTuningPath();
             try
             {
-                var data = new ProfileSetData { version = CurrentVersion, grades = Runtime };
-                File.WriteAllText(path, JsonUtility.ToJson(data, true), Encoding.UTF8);
+                var data = new ProfileSetData { version = CurrentVersion, items = ProfileJson.Pack(Runtime) };
+                string json = JsonUtility.ToJson(data, true);
+
+                // 만들어진 문자열을 그대로 확인합니다. 저장 파일이 빈 값으로 나오던 원인을
+                // 가리기 위한 것입니다 — 여기서 이미 비어 있으면 직렬화 문제이고,
+                // 여기서는 멀쩡한데 파일이 비어 있으면 쓰기 문제입니다.
+                UnityEngine.Debug.Log(
+                    $"[WeaponAura] 저장 직렬화(총구): {json.Length}자, 항목 {Runtime.Length}개, " +
+                    $"앞부분={json.Substring(0, Mathf.Min(60, json.Length))}");
+
+                File.WriteAllText(path, json, Encoding.UTF8);
                 return true;
             }
             catch (Exception ex)
@@ -460,11 +542,40 @@ namespace WeaponAura.Systems
             }
         }
 
+        /// <summary>지금 값을 문자열 하나로 떠 둡니다 (되돌리기용).</summary>
+        public static string Snapshot()
+        {
+            return JsonUtility.ToJson(new ProfileSetData { items = ProfileJson.Pack(Runtime) });
+        }
+
+        /// <summary>떠 둔 값으로 되돌립니다.</summary>
+        public static bool Restore(string json)
+        {
+            try
+            {
+                var data = JsonUtility.FromJson<ProfileSetData>(json);
+                var loaded = Read(data);
+                if (loaded.Length == 0)
+                    return false;
+
+                _runtime = loaded;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogWarning($"[WeaponAura] 총구 화염 되돌리기 실패: {ex.Message}");
+                return false;
+            }
+        }
+
         public static bool Load(out string path)
         {
             path = GetTuningPath();
             try
             {
+                // 새 위치에 없으면 예전 위치(모드 폴더)에서 읽어 옵니다.
+                path = WeaponAuraProfiles.ResolveReadPath(TuningFileName);
+
                 if (!File.Exists(path))
                     return false;
 

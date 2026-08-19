@@ -63,6 +63,7 @@ namespace WeaponAura.UI
         protected override void OnFrame()
         {
             MeleeSlashSystem.PreviewTick(_emitter);
+            TickPendingLayers();
 
             // 판이 향하는 쪽으로 카메라를 돌리고, 호의 실제 크기에 화면을 맞춥니다.
             // 알갱이가 살아 있는 동안에만 읽을 수 있으므로, 읽힐 때마다 갱신하고
@@ -133,7 +134,120 @@ namespace WeaponAura.UI
             // 뿌리므로, 미리보기에서 호를 따라 붙어 있으면 게임에서도 붙어 있습니다.
             if (mode != MeleeSlashMode.TintDefault && _emitter != null)
                 MeleeSlashSystem.PreviewEmit(_emitter, Profile, _gameSlash);
+
+            // 레이어는 모드와 무관하게 나갑니다. 다만 호 위에 놓아야 하는데 호는 이
+            // 프레임에 아직 안 나와 있습니다 — 런타임과 같은 이유입니다. OnFrame에서
+            // 자리를 찾는 대로 뿜습니다.
+            if (_gameSlash != null)
+            {
+                _layersPending = true;
+                _layerWaitFrames = ArcWaitFrames;
+            }
+            else
+            {
+                // 참격을 지우는 모드. 기다릴 호가 없으니 무대 원점에서 뿜습니다.
+                PlayLayerBurst(Profile.layers, Profile.sparkSize, SlowMotion);
+            }
         }
+
+        /// <summary>호가 나오기를 기다리는 중인지.</summary>
+        private bool _layersPending;
+
+        private int _layerWaitFrames;
+
+        /// <summary>
+        /// 호를 몇 프레임까지 기다릴지.
+        ///
+        /// 런타임(6프레임)보다 넉넉합니다 — 무대의 참격은 형태를 읽으라고 <see cref="SlowMotion"/>
+        /// 배로 늦춰 돌리기 때문에, 알갱이가 나오기까지도 그만큼 더 걸립니다. 여섯 프레임에서
+        /// 끊으면 대부분 못 읽고 한가운데로 밀려났습니다.
+        /// </summary>
+        private const int ArcWaitFrames = 30;
+
+        /// <summary>
+        /// 마지막으로 읽어 둔 호. 참격이 사라진 사이에도 들고 있습니다.
+        ///
+        /// 호는 참격 알갱이가 <b>살아 있는 동안에만</b> 읽힙니다. 카메라 방향과 화면 크기가
+        /// 이미 같은 이유로 마지막 값을 붙들고 있는데(<see cref="_measuredRadius"/>),
+        /// 레이어만 "지금 못 읽으면 포기"였습니다. 참격을 세우자마자 뿜으려 드니 그 순간에는
+        /// 아직 알갱이가 없어서, <b>미리보기에서만</b> 자리를 못 잡고 한가운데로 밀려났습니다.
+        /// 실제 게임에서는 참격이 열두 프레임쯤 살아 있어서 기다리면 잡혔습니다.
+        /// </summary>
+        private (Vector3 position, Quaternion rotation)? _arcPose;
+
+        private EffectLayerBurst.BurstArc _arc;
+
+        private void TickPendingLayers()
+        {
+            bool live = MeleeSlashSystem.TryGetArcAnchor(_gameSlash, Profile, out var position,
+                out var rotation, out var arc);
+
+            if (live)
+            {
+                _arcPose = (position, rotation);
+                _arc = arc;
+            }
+
+            if (!_layersPending)
+                return;
+
+            // 이번 참격에서 호를 읽었으면 그 위에서 뿜습니다.
+            if (live)
+            {
+                PlayLayerBurst(Profile.layers, Profile.sparkSize, SlowMotion, _arcPose, _arc);
+                LogLayerBurst("호 읽음");
+                _layersPending = false;
+                return;
+            }
+
+            // 아직입니다. 참격이 살아 있는 동안 계속 봅니다 — 다음 참격이 시작되면
+            // Fire가 다시 잡아 줍니다.
+            if (--_layerWaitFrames > 0)
+                return;
+
+            // 이 참격에서는 끝내 못 읽었습니다. 예전에 읽어 둔 호가 있으면 그것을 씁니다.
+            // 자리는 같은 무기라면 매번 같으므로 눈에 띄는 차이가 없습니다.
+            PlayLayerBurst(Profile.layers, Profile.sparkSize, SlowMotion, _arcPose,
+                _arcPose != null ? _arc : (EffectLayerBurst.BurstArc?)null);
+
+            LogLayerBurst(_arcPose != null ? "직전 호" : "호 없음");
+            _layersPending = false;
+        }
+
+        /// <summary>
+        /// 레이어가 무대에서 어떻게 뿜혔는지 한 줄.
+        ///
+        /// "미리보기에만 안 나온다"를 눈으로 가리려면 <b>호를 읽었는지</b>와 <b>어디에
+        /// 놓였는지</b>를 알아야 합니다. 그게 없으면 안 만들어진 것인지, 만들었는데 화면
+        /// 밖인지 구분이 안 됩니다. 상태가 바뀔 때만 남겨서 로그를 채우지 않습니다.
+        /// </summary>
+        private void LogLayerBurst(string how)
+        {
+            int on = 0;
+            int arcs = 0;
+
+            foreach (var layer in Profile.layers)
+            {
+                if (layer == null || !layer.enabled)
+                    continue;
+
+                on++;
+                if (layer.arcSpread)
+                    arcs++;
+            }
+
+            string line = $"{how} 레이어={on}개(반월 {arcs}) " +
+                          $"반지름={_arc.Radius:0.00}m 각도={_arc.Degrees:0}도 " +
+                          $"참격={(_gameSlash != null ? "있음" : "없음")}";
+
+            if (line == _lastLayerLog)
+                return;
+
+            _lastLayerLog = line;
+            UnityEngine.Debug.Log($"[WeaponAura] 참격 미리보기 레이어: {line}");
+        }
+
+        private string _lastLayerLog = "";
 
         protected override float NeededViewHeight()
         {
@@ -159,6 +273,15 @@ namespace WeaponAura.UI
                 needed = Mathf.Max(needed, Mathf.Abs(Profile.sparkRise) * 2.6f + Profile.sparkSize);
                 needed = Mathf.Max(needed, Profile.sparkSize * 4f);
             }
+
+            // 레이어는 모드와 무관하게 나갑니다. 참격이 남는 모드에서는 호 위에서
+            // 뿜으므로, 호 밖으로 뻗는 만큼을 호 크기에 <b>더해</b> 잡아야 합니다.
+            float layers = LayerViewHeight(Profile.layers);
+
+            if (mode != MeleeSlashMode.Replace && _measuredRadius > 0.01f)
+                layers += _measuredRadius * 2f;
+
+            needed = Mathf.Max(needed, layers);
 
             return needed;
         }

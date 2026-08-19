@@ -152,6 +152,10 @@ namespace WeaponAura.Patches
 
                 int quality = WeaponHelper.GetQuality(ammo);
 
+                // 화염은 탄약 등급으로 고르지만, 이 총에 전용 설정이 있으면 그쪽이 이깁니다.
+                var gun = __instance.Item;
+                int weaponTypeId = gun != null ? gun.TypeID : 0;
+
                 RememberPrefab(__instance);
 
                 var mode = MuzzleFlashSettings.Mode;
@@ -166,7 +170,7 @@ namespace WeaponAura.Patches
                     // 게임 화염이 남는 모드에서는 그 형태를 그대로 쓰고 색·크기만 바꿉니다.
                     // 함께 표시도 마찬가지입니다 — 내 이펙트만 등급 색이고 게임 화염은
                     // 원래 주황색이면 둘이 따로 노는 것처럼 보입니다.
-                    var profile = MuzzleFlashProfiles.Resolve(quality);
+                    var profile = MuzzleFlashProfiles.Resolve(quality, weaponTypeId);
                     if (profile == null || !profile.enabled)
                         return;
 
@@ -179,7 +183,18 @@ namespace WeaponAura.Patches
 
                 // 내 이펙트는 색만 바꾸기를 뺀 나머지 두 모드에서 나갑니다.
                 if (mode != MuzzleFlashMode.TintDefault)
-                    MuzzleFlashSystem.Spawn(muzzle, quality);
+                    MuzzleFlashSystem.Spawn(muzzle, quality, weaponTypeId);
+
+                // 레이어는 모드와 무관하게 나갑니다.
+                //
+                // 본체 화염을 게임 것으로 두고(색만 바꾸기) 레이어만 더 얹는 조합이
+                // 실제로 쓸 만합니다 — 원본 화염은 그대로, 그 위에 불티만 추가.
+                var layered = MuzzleFlashProfiles.Resolve(quality, weaponTypeId);
+                if (layered != null && layered.enabled)
+                {
+                    EffectLayerBurst.Play(layered.layers, muzzle.position, muzzle.rotation,
+                        Vector3.one * Mathf.Max(0.05f, layered.size));
+                }
             }
             catch
             {

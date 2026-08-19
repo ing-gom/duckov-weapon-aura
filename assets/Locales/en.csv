@@ -38,7 +38,7 @@ display_intense,Intense
 action_save,Save changes
 action_random,Random
 action_reset_defaults,Restore defaults
-action_saved,Saved. It will be applied automatically next time.
+action_saved,Saved. These settings will persist across restarts.
 action_save_failed,Saving failed.
 action_random_applied,Applied a random look to grade {0} (seed {1}).
 action_reset_done,Restored the defaults. Save to keep them.
@@ -286,7 +286,6 @@ section_basic,Basic
 section_advanced,Advanced
 section_surface,Surface and noise
 section_motion,Motion and trails
-section_flipbook,Flipbook (tiled sheet)
 section_ring,Ring (orbiting lights)
 section_share,Share settings
 field_roundness,Roundness
@@ -295,9 +294,6 @@ field_noise_strength,Noise strength
 field_noise_frequency,Noise frequency
 field_rotation_speed,Spin speed
 field_drag,Drag
-field_tiles_x,Columns
-field_tiles_y,Rows
-field_flipbook_fps,Play speed (0 = lifetime)
 field_ring_on,Enable ring
 field_ring_off,Disable ring
 field_ring_count,Ring count
@@ -315,3 +311,110 @@ share_failed,Could not read those settings.
 field_ring_roll,Ring roll
 field_ring_texture,Ring shape
 field_ring_texture_same,Same as aura
+target_label,Target
+target_grade,By grade
+target_class,By class
+target_weapon,Single weapon
+target_pick,Pick a weapon
+target_editing,Editing: {0}
+target_using_override,Using its own settings
+target_using_grade,Using grade defaults
+target_remove,Delete these settings
+target_removed,Deleted settings for {0}
+target_created,Created settings for {0}
+target_pruned,Cleared settings you never changed
+target_melee,Melee
+target_need_world,Enter the game to see the weapon list
+library_title,Pick a weapon
+library_search,Search
+library_all,All
+library_empty,No weapons match
+library_close,Close
+library_count,{0}
+library_held,Weapon in hand
+library_marked,Has own settings
+confirm_title,Unsaved changes
+confirm_body,You have unsaved changes. Closing without saving restores everything to how it was when you opened this window.
+confirm_save,Save and close
+confirm_discard,Close without saving
+confirm_cancel,Cancel
+confirm_reverted,Reverted your unsaved changes
+target_class_on,Class settings ON
+target_class_off,Use class settings
+target_class_disabled,Class settings are off — turn them on first
+particles_tab,Weapon particles
+particles_enable,Enable weapon particles
+particles_grade_enable,Use for this grade
+particles_layers,Layers
+particles_add_layer,Add layer
+particles_remove_layer,Remove layer
+particles_layer_full,Up to {0} layers
+particles_layer_empty,Add a layer to begin
+particles_layer_on,On
+particles_layer_off,Off
+particles_shape,Shape
+particles_anchor,Emit from
+particles_anchor_whole,Whole weapon
+particles_anchor_muzzle,Muzzle
+particles_anchor_body,Body
+particles_anchor_barrel,Barrel
+particles_field_intensity,Brightness
+particles_field_size,Particle size
+particles_field_rate,Rate
+particles_field_lifetime,Lifetime
+particles_field_speed,Speed
+particles_field_spread,Spread
+particles_field_rise,Rise
+particles_field_offset,Forward offset
+particles_field_pulse,Pulse
+particles_field_pulse_speed,Pulse period
+library_marked_only,Customized
+target_editing_off,Editing: {0} - turned off for this weapon
+particles_live_count,live
+particles_direction,Direction
+particles_dir_sphere,All ways
+particles_dir_forward,Forward
+particles_dir_backward,Back
+particles_dir_up,Up
+particles_dir_down,Down
+particles_field_cone,Cone angle
+particles_lifecycle,Over lifetime
+particles_use_color_end,Separate end color
+particles_color_end,End color
+particles_field_alpha_start,Start alpha
+particles_field_alpha_end,End alpha
+particles_field_size_start,Start size
+particles_field_size_end,End size
+particles_look,Appearance
+particles_stretch,Stretch
+particles_field_stretch,Stretch amount
+particles_field_noise,Turbulence
+particles_field_spin,Spin
+particles_offset,Fine position
+particles_offset_x,Left / Right
+particles_offset_y,Up / Down
+particles_offset_z,Front / Back
+particles_show_gizmo,Show emit point
+particles_basics,Color & amount
+particles_pulse_section,Pulse
+shape_list_title,Your shapes
+shape_list_empty,No shapes yet
+shape_edit,Edit
+shape_delete,Delete
+share_paste_title,Paste settings code
+share_paste_help,Paste a code, check it, then apply. Applying overwrites what you are editing now.
+share_paste_apply,Apply
+share_paste_clipboard,From clipboard
+share_paste_ready,Contains: {0}
+picker_title,Pick a shape
+picker_open,Pick shape
+share_export_label,Export
+share_import_label,Import
+share_copy_tab,Copy this tab
+share_copy_all,Copy everything
+share_copied_tab,Copied this tab ({0} chars)
+share_copied_all,Copied everything ({0} chars)
+share_pasted_count,Applied: {0}
+share_open,Share settings
+particles_no_layers,This tab has no layers
+particles_arc_spread,Spread along the arc

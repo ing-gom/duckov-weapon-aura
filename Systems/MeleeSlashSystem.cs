@@ -414,8 +414,104 @@ namespace WeaponAura.Systems
         /// LateUpdate여야 합니다. 참격은 캐릭터에 붙어 있어서 캐릭터가 움직이는 만큼 같이
         /// 움직이는데, Update에서 읽으면 프레임에 따라 한 박자 뒤처집니다.
         /// </summary>
+        // ── 레이어 ───────────────────────────────────────────────────
+
+        /// <summary>호가 나오기를 기다리는 레이어 한 벌.</summary>
+        private sealed class PendingLayers
+        {
+            public GameObject? Slash;
+            public MeleeSlashProfile Profile = null!;
+            public Vector3 FallbackPosition;
+            public Quaternion FallbackRotation;
+            public int FramesLeft;
+        }
+
+        /// <summary>호를 몇 프레임까지 기다릴지. 그 안에 안 나오면 그 자리에서 뿜습니다.</summary>
+        private const int ArcWaitFrames = 6;
+
+        private static readonly List<PendingLayers> _pendingLayers = new List<PendingLayers>();
+
+        /// <summary>
+        /// 참격 레이어를 뿜습니다 — <b>호가 나온 뒤에</b>.
+        ///
+        /// 휘두르는 그 프레임에는 참격 알갱이가 아직 안 나와 있어서 호의 자리를 알 수
+        /// 없습니다(흩뿌림도 같은 이유로 프레임을 넘겨 가며 얹습니다). 그래서 바로 뿜지
+        /// 않고 몇 프레임 기다렸다가, 호를 찾으면 그 위에서 뿜습니다.
+        ///
+        /// 끝내 못 찾으면 넘겨받은 자리에서 뿜습니다 — 자리가 어긋나는 것이
+        /// 아무것도 안 나오는 것보다는 낫습니다.
+        /// </summary>
+        /// <param name="slash">게임 참격 오브젝트. 지우는 모드에서는 null입니다.</param>
+        public static void PlayLayers(GameObject? slash, MeleeSlashProfile? profile,
+            Vector3 fallbackPosition, Quaternion fallbackRotation)
+        {
+            if (profile == null || profile.layers.Length == 0)
+                return;
+
+            // 지울 참격이면 기다릴 호가 없습니다. 바로 뿜습니다.
+            if (slash == null)
+            {
+                EmitLayers(profile, fallbackPosition, fallbackRotation, null);
+                return;
+            }
+
+            // 이미 호를 읽을 수 있으면 기다릴 것도 없습니다.
+            if (TryGetArcAnchor(slash, profile, out var position, out var rotation, out var arc))
+            {
+                EmitLayers(profile, position, rotation, arc);
+                return;
+            }
+
+            if (_pendingLayers.Count >= MaxLiveBursts)
+                return;
+
+            _pendingLayers.Add(new PendingLayers
+            {
+                Slash = slash,
+                Profile = profile,
+                FallbackPosition = fallbackPosition,
+                FallbackRotation = fallbackRotation,
+                FramesLeft = ArcWaitFrames,
+            });
+        }
+
+        private static void TickPendingLayers()
+        {
+            for (int i = _pendingLayers.Count - 1; i >= 0; i--)
+            {
+                var pending = _pendingLayers[i];
+
+                bool found = TryGetArcAnchor(pending.Slash, pending.Profile,
+                    out var position, out var rotation, out var arc);
+
+                if (!found)
+                {
+                    // 참격이 먼저 사라졌거나 기다릴 만큼 기다렸으면 넘겨받은 자리에서.
+                    bool gone = pending.Slash == null;
+                    if (!gone && --pending.FramesLeft > 0)
+                        continue;
+
+                    EmitLayers(pending.Profile, pending.FallbackPosition, pending.FallbackRotation, null);
+                    _pendingLayers.RemoveAt(i);
+                    continue;
+                }
+
+                EmitLayers(pending.Profile, position, rotation, arc);
+                _pendingLayers.RemoveAt(i);
+            }
+        }
+
+        private static void EmitLayers(MeleeSlashProfile profile, Vector3 position, Quaternion rotation,
+            EffectLayerBurst.BurstArc? arc)
+        {
+            EffectLayerBurst.Play(profile.layers, position, rotation,
+                Vector3.one * Mathf.Max(0.05f, profile.sparkSize), arc);
+        }
+
         public static void LateTick()
         {
+            TickPendingLayers();
+
             for (int i = _live.Count - 1; i >= 0; i--)
             {
                 var handle = _live[i];
@@ -578,6 +674,108 @@ namespace WeaponAura.Systems
         /// 미리보기 카메라가 그 판을 정면으로 보기 위해 씁니다 — 판이 바닥에 누워 있으면
         /// 옆에서 찍을 때 선 하나로 보여서 "안 보인다"가 됩니다.
         /// </summary>
+        /// <summary>
+        /// 레이어를 놓을 자리 — <b>호 위</b>입니다.
+        ///
+        /// 총에서는 레이어가 총구에, 즉 화염이 실제로 보이는 자리에 붙습니다. 참격에서
+        /// 참격 오브젝트의 트랜스폼을 그대로 쓰면 <b>호의 한가운데(회전 중심)</b>에
+        /// 놓입니다 — 호가 지름 8m쯤 되는 물건이라, 이펙트만 저 멀리 가운데 덩그러니
+        /// 뜹니다. "총이랑 위치가 다르다"가 이것입니다.
+        ///
+        /// 그래서 흩뿌림과 <b>같은 좌표계</b>로 호 위의 한 점을 찾습니다. 쿼드 로컬에서
+        /// 반지름 0.5가 테두리이고, 어느 쪽이 호의 정면인지는 <see cref="MeleeSlashProfile.slashFacing"/>이
+        /// 들고 있습니다 — 흩뿌림이 이미 쓰는 값이라 둘이 같은 곳을 가리킵니다.
+        ///
+        /// 방향도 총과 맞춥니다. 앞쪽은 호가 뻗어 나가는 <b>바깥</b>, 위쪽은 판의 법선입니다.
+        /// 이렇게 두어야 레이어의 "앞으로 · 뒤로 · 위로"가 총에서와 같은 뜻이 됩니다.
+        /// </summary>
+        /// <returns>아직 호가 안 나왔으면 false — 부르는 쪽이 다음 프레임에 다시 봅니다.</returns>
+        public static bool TryGetArcAnchor(GameObject? slash, MeleeSlashProfile? profile,
+            out Vector3 position, out Quaternion rotation, out EffectLayerBurst.BurstArc arc)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
+            arc = default;
+
+            if (slash == null || profile == null)
+                return false;
+
+            try
+            {
+                var source = FindSourceSystem(slash);
+                if (source == null || source.particleCount <= 0)
+                    return false;
+
+                if (_particles.Length < source.particleCount)
+                    _particles = new ParticleSystem.Particle[Mathf.NextPowerOfTwo(source.particleCount)];
+
+                int read = source.GetParticles(_particles);
+                if (read <= 0)
+                    return false;
+
+                // 가장 큰 알갱이가 호 본체입니다 (흩뿌림이 쓰는 판정과 같습니다).
+                int best = 0;
+                float bestSize = -1f;
+                for (int i = 0; i < read; i++)
+                {
+                    float size = _particles[i].GetCurrentSize(source);
+                    if (size <= bestSize)
+                        continue;
+
+                    best = i;
+                    bestSize = size;
+                }
+
+                if (bestSize <= 0.0001f)
+                    return false;
+
+                var toWorld = ParticleMatrix(source, _particles[best], bestSize);
+                Vector3 center = toWorld.MultiplyPoint3x4(Vector3.zero);
+
+                // 쿼드 로컬에서 각도 하나를 월드의 한 점으로 옮깁니다. 흩뿌림이 쓰는
+                // 식과 같아서, 둘이 반드시 같은 호를 가리킵니다.
+                Vector3 At(float degrees)
+                {
+                    float radians = degrees * Mathf.Deg2Rad;
+                    return toWorld.MultiplyPoint3x4(new Vector3(
+                        Mathf.Sin(radians) * 0.5f, Mathf.Cos(radians) * 0.5f, 0f));
+                }
+
+                float facing = profile.slashFacing;
+                float halfArc = Mathf.Clamp(profile.sparkArc * 0.5f, 1f, 180f);
+
+                position = At(facing);
+
+                var outward = position - center;
+                if (outward.sqrMagnitude < 0.000001f)
+                    return false;
+
+                var normal = toWorld.MultiplyVector(Vector3.forward);
+                if (normal.sqrMagnitude < 0.000001f)
+                    normal = Vector3.up;
+
+                rotation = Quaternion.LookRotation(outward.normalized, normal.normalized);
+
+                // 호가 시작하는 쪽과, 거기서 90도 돈 쪽. 둘의 외적이 곧 <b>도는 축</b>입니다.
+                // 법선의 부호를 짐작하는 대신 이렇게 구하면 도는 방향이 뒤집힐 일이 없습니다.
+                var start = (At(facing - halfArc) - center).normalized;
+                var quarter = (At(facing - halfArc + 90f) - center).normalized;
+                var axis = Vector3.Cross(start, quarter);
+
+                if (axis.sqrMagnitude < 0.000001f)
+                    axis = normal;
+
+                arc = new EffectLayerBurst.BurstArc(
+                    center, start, axis.normalized, outward.magnitude, halfArc * 2f);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static bool TryGetSlashFrame(GameObject? slash, out Vector3 center, out Quaternion rotation,
             out float radius)
         {
@@ -628,6 +826,7 @@ namespace WeaponAura.Systems
                     Recycle(handle);
 
                 _live.Clear();
+                _pendingLayers.Clear();
             }
             catch
             {
@@ -892,6 +1091,7 @@ namespace WeaponAura.Systems
             var size = handle.Sparks.sizeOverLifetime;
             size.enabled = true;
             size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0.1f));
+
         }
 
         /// <summary>칼날 쪽의 밝은 색에서 등급 색으로 번지며 사라집니다.</summary>

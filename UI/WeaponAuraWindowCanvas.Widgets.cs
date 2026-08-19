@@ -171,6 +171,52 @@ namespace WeaponAura.UI
         }
 
         /// <summary>
+        /// 긴 문자열을 넣고 보는 칸 (설정 코드용).
+        ///
+        /// <see cref="MakeInputField"/>는 라벨이 앞에 붙는 <b>한 줄</b>짜리이고 폭을 숫자로
+        /// 받습니다. 설정 코드에 그걸 쓰면서 폭을 0으로 넘겼더니 칸이 통째로 찌그러졌습니다 —
+        /// preferredWidth 0에 flexibleWidth 0이면 늘어날 근거가 없습니다.
+        ///
+        /// 코드는 수천 자라 한 줄로는 앞부분만 보입니다. 넣은 것이 맞는지 눈으로 확인하는
+        /// 것이 이 칸의 목적이므로 여러 줄로 접어서 보여 줍니다.
+        /// </summary>
+        private TMP_InputField MakeCodeField(Transform parent, float height)
+        {
+            var box = MakeImage("CodeBox", parent, new Color(0f, 0f, 0f, 0.5f));
+
+            var element = box.gameObject.AddComponent<LayoutElement>();
+            element.preferredHeight = height;
+            element.flexibleWidth = 1f;
+
+            var viewport = MakeRect("TextArea", box.transform);
+            viewport.anchorMin = Vector2.zero;
+            viewport.anchorMax = Vector2.one;
+            viewport.offsetMin = new Vector2(8f, 6f);
+            viewport.offsetMax = new Vector2(-8f, -6f);
+            viewport.gameObject.AddComponent<RectMask2D>();
+
+            var text = MakeText("Text", viewport, "", 15, TextColor, TextAlignmentOptions.TopLeft);
+            Stretch(text.rectTransform);
+            text.enableWordWrapping = true;
+            text.overflowMode = TextOverflowModes.Overflow;
+
+            var field = box.gameObject.AddComponent<TMP_InputField>();
+            field.textViewport = viewport;
+            field.textComponent = text;
+            field.characterValidation = TMP_InputField.CharacterValidation.None;
+
+            // 여러 줄로 접어 보여 줍니다. 코드 자체에는 줄바꿈이 없지만, 넣을 때 섞여
+            // 들어오는 경우가 있어서 받아 두고 적용할 때 다듬습니다.
+            field.lineType = TMP_InputField.LineType.MultiLineNewline;
+
+            field.targetGraphic = box;
+            field.customCaretColor = true;
+            field.caretColor = TextColor;
+
+            return field;
+        }
+
+        /// <summary>
         /// 세로 스크롤바. 오른쪽 끝에 붙이고, 내용이 넘칠 때만 나타납니다.
         /// (ScrollRect 혼자서는 막대를 그려 주지 않아 직접 만들어 물려 줘야 합니다)
         /// </summary>
@@ -244,6 +290,12 @@ namespace WeaponAura.UI
         /// <summary>지금 편집 중인 티어의 프로필</summary>
         private WeaponAuraProfile? CurrentProfile()
         {
+            // 전용 설정을 편집 중이면 그것이 대상입니다. 이 한 줄로 슬라이더·색 선택·
+            // 미리보기·공유 코드가 전부 같은 대상을 보게 됩니다.
+            var over = CurrentOverride();
+            if (over != null)
+                return over.aura;
+
             if (_editingTier < 0)
                 _editingTier = Mathf.Max(0, WeaponAuraSystem.CurrentTier);
 
@@ -253,6 +305,11 @@ namespace WeaponAura.UI
         /// <summary>슬라이더를 프로필 값으로 되돌려 채웁니다 (알림 없이).</summary>
         private void SyncFromProfile()
         {
+            // 겹은 오라 프로필 안에 있으므로 대상이 바뀌면 겹 목록도 다시 그려야 합니다.
+            // (등급을 옮기거나 전용 설정으로 넘어가면 겹의 수 자체가 달라집니다)
+            RebuildLayerButtons();
+            SyncLayerFromProfile();
+
             var profile = CurrentProfile();
             if (profile == null)
                 return;
@@ -461,6 +518,14 @@ namespace WeaponAura.UI
             if (rebuild)
                 _preview?.RequestRebuild();
 
+            // 전용 설정은 티어와 무관합니다. 든 무기에 그 설정이 실제로 걸리는지는
+            // WeaponOverrides가 판단하므로, 여기서는 알리기만 하고 넘어갑니다.
+            if (EditingOverride)
+            {
+                WeaponOverrides.NotifyChanged();
+                return;
+            }
+
             if (_editingTier != WeaponAuraSystem.CurrentTier)
                 return;
 
@@ -586,10 +651,24 @@ namespace WeaponAura.UI
             var editing = CurrentProfile();
             int editingGrade = editing != null ? editing.minLevel : 0;
 
+            // 무기 한 정을 편집 중이면 <b>그 무기</b>를 보여 줍니다.
+            //
+            // 예전에는 늘 "지금 든 무기"를 찍었습니다. 라이브러리에서 다른 총을 골라도
+            // 이 줄만 손에 든 총 이름으로 남아서, 무엇을 편집 중인지와 화면이 어긋났습니다.
+            bool editingWeapon = _editTarget == EditTarget.Weapon && _editWeaponTypeId > 0;
+
+            string weaponName = editingWeapon
+                ? Helpers.WeaponHelper.GetDisplayName(_editWeaponTypeId)
+                : WeaponAuraSystem.CurrentWeaponName;
+
+            int weaponGrade = editingWeapon
+                ? Helpers.WeaponHelper.GetMetaQuality(_editWeaponTypeId)
+                : WeaponAuraSystem.CurrentMetaQuality;
+
             // 편집 대상과 반영 범위는 한 줄에 넣으면 왼쪽 열 폭을 넘겨서 잘립니다.
             _statusText.text =
-                string.Format(L.Status.Weapon, WeaponAuraSystem.CurrentWeaponName) + "\n" +
-                string.Format(L.Status.Grade, WeaponAuraSystem.CurrentMetaQuality) + "\n" +
+                string.Format(L.Status.Weapon, weaponName) + "\n" +
+                string.Format(L.Status.Grade, weaponGrade) + "\n" +
                 string.Format(L.Status.Editing, editingGrade, follow) + "\n" +
                 scope + "\n" +
                 (_preview != null && _preview.Status != "-" ? _preview.Status : string.Empty);
@@ -610,10 +689,23 @@ namespace WeaponAura.UI
             bool muzzleSaved = MuzzleFlashProfiles.Save(out string muzzlePath);
             bool meleeSaved = MeleeSlashProfiles.Save(out string meleePath);
 
-            if (auraSaved && trailSaved && muzzleSaved && meleeSaved)
+            // 무기별 전용 설정도 같은 버튼으로 나갑니다. 저장 버튼이 무엇을 저장하고
+            // 무엇을 안 하는지 사용자가 알아야 할 이유가 없습니다.
+            //
+            // 여기서 PruneUnmodified를 부르면 안 됩니다. 지금 편집 중인 설정까지 대상이
+            // 되어서, 저장을 누르는 순간 그것이 지워지고 이후 편집이 <b>등급 프로필로
+            // 새어 나갔습니다</b>. 실측 로그에 "전용 설정 삭제: weapon:659" 바로 다음 줄이
+            // "설정을 저장했습니다"로 찍혀 있었습니다. 정리는 대상을 옮길 때만 합니다.
+            bool overridesSaved = WeaponOverrides.Save(out string overridePath);
+
+            if (auraSaved && trailSaved && muzzleSaved && meleeSaved && overridesSaved)
             {
                 UnityEngine.Debug.Log(
-                    $"[WeaponAura] 설정을 저장했습니다: {auraPath}, {trailPath}, {muzzlePath}, {meleePath}");
+                    $"[WeaponAura] 설정을 저장했습니다: {auraPath}, {trailPath}, {muzzlePath}, " +
+                    $"{meleePath}, {overridePath} (전용 {WeaponOverrides.Count}개)");
+
+                // 저장한 값이 새 기준입니다. 안 갱신하면 저장 직후에 닫아도 다시 묻습니다.
+                RefreshSnapshot();
                 ShowHint(L.Action.Saved);
             }
             else
@@ -621,7 +713,7 @@ namespace WeaponAura.UI
                 UnityEngine.Debug.LogWarning(
                     $"[WeaponAura] 설정 저장에 실패했습니다 " +
                     $"(오라={auraSaved}, 탄환 잔상={trailSaved}, 총구 화염={muzzleSaved}, " +
-                    $"근접 참격={meleeSaved}).");
+                    $"근접 참격={meleeSaved}, 전용 설정={overridesSaved}).");
                 ShowHint(L.Action.SaveFailed);
             }
         }
@@ -660,8 +752,6 @@ namespace WeaponAura.UI
 
             var generated = WeaponAuraProfiles.CreateRandom(seed, target.name, target.minLevel);
             generated.textureName = target.textureName;
-            generated.tilesX = target.tilesX;
-            generated.tilesY = target.tilesY;
 
             target.CopyFrom(generated);
 
@@ -682,8 +772,6 @@ namespace WeaponAura.UI
 
             var preset = WeaponAuraProfiles.CreatePreset(kind, target.name, target.minLevel);
             preset.textureName = target.textureName;
-            preset.tilesX = target.tilesX;
-            preset.tilesY = target.tilesY;
 
             // 이 등급을 꺼 뒀다면 템플릿을 바꿨다고 멋대로 켜지 않습니다.
             preset.enabled = target.enabled;

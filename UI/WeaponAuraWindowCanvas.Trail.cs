@@ -202,6 +202,7 @@ namespace WeaponAura.UI
             int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)TierColumns));
 
             var grid = MakeRect("TrailGradeGrid", parent);
+            RegisterGradeSelector(grid.gameObject);
             SetHeight(grid, rows * TierCellHeight + (rows - 1) * TierCellSpacing);
 
             var layout = grid.gameObject.AddComponent<GridLayoutGroup>();
@@ -233,11 +234,11 @@ namespace WeaponAura.UI
         {
             _trailRows.Clear();
 
-            AddSectionLabel(parent, L.Section.Display);
-            BuildTrailDisplayRow(parent);
+            var section1 = AddSectionLabel(parent, L.Section.Display);
+            BuildTrailDisplayRow(section1);
 
-            AddSectionLabel(parent, L.Trail.SectionColorHead);
-            _trailPickerHead = AddColorPicker(parent, color =>
+            var section2 = AddSectionLabel(parent, L.Trail.SectionColorHead);
+            _trailPickerHead = AddColorPicker(section2, color =>
             {
                 var profile = CurrentTrailProfile();
                 if (profile == null)
@@ -247,8 +248,8 @@ namespace WeaponAura.UI
                 RefreshTrailPreview();
             });
 
-            AddSectionLabel(parent, L.Trail.SectionColorTail);
-            _trailPickerTail = AddColorPicker(parent, color =>
+            var section3 = AddSectionLabel(parent, L.Trail.SectionColorTail);
+            _trailPickerTail = AddColorPicker(section3, color =>
             {
                 var profile = CurrentTrailProfile();
                 if (profile == null)
@@ -258,14 +259,14 @@ namespace WeaponAura.UI
                 RefreshTrailPreview();
             });
 
-            AddSectionLabel(parent, L.Trail.SectionShape);
+            var section4 = AddSectionLabel(parent, L.Trail.SectionShape);
 
             // 방식이 먼저입니다 — 아래 항목 중 무엇이 쓰이는지가 여기서 갈립니다.
-            BuildTrailStyleRow(parent);
+            BuildTrailStyleRow(section4);
 
-            AddTrailSlider(parent, L.Trail.FieldLength, 0.03f, 0.8f, "0.00",
+            AddTrailSlider(section4, L.Trail.FieldLength, 0.03f, 0.8f, "0.00",
                 p => p.length, (p, v) => p.length = v);
-            AddTrailSlider(parent, L.Trail.FieldStartWidth, 0.005f, 0.2f, "0.000",
+            AddTrailSlider(section4, L.Trail.FieldStartWidth, 0.005f, 0.2f, "0.000",
                 p => p.startWidth, (p, v) => p.startWidth = v);
         }
 
@@ -275,29 +276,29 @@ namespace WeaponAura.UI
         /// </summary>
         private void BuildTrailAdvanced(Transform parent)
         {
-            AddSectionLabel(parent, L.Trail.SectionShape);
-            AddTrailSlider(parent, L.Trail.FieldEndWidth, 0f, 0.1f, "0.000",
+            var section5 = AddSectionLabel(parent, L.Trail.SectionShape);
+            AddTrailSlider(section5, L.Trail.FieldEndWidth, 0f, 0.1f, "0.000",
                 p => p.endWidth, (p, v) => p.endWidth = v);
-            AddTrailSlider(parent, L.Trail.FieldAlpha, 0f, 1f, "0.00",
+            AddTrailSlider(section5, L.Trail.FieldAlpha, 0f, 1f, "0.00",
                 p => p.alpha, (p, v) => p.alpha = v);
-            AddTrailSlider(parent, L.Trail.FieldIntensity, 0.5f, 3f, "0.00",
+            AddTrailSlider(section5, L.Trail.FieldIntensity, 0.5f, 3f, "0.00",
                 p => p.intensity, (p, v) => p.intensity = v);
 
-            BuildTrailGlowRow(parent);
+            BuildTrailGlowRow(section5);
 
             // 머리는 "원본 궤적 숨기기"를 켰을 때만 그려집니다. 그 사실을 모르면
             // 슬라이더를 아무리 움직여도 화면이 안 바뀌는 것으로 보입니다.
-            AddSectionLabel(parent, L.Trail.SectionHead);
+            var section6 = AddSectionLabel(parent, L.Trail.SectionHead);
 
             // 안내문과 [켜기] 버튼은 상자 <b>밖</b>에 둡니다. 상자는 조건이 맞지 않으면
             // 입력을 막는데, 그 안에 켜는 버튼을 두면 눌러서 켤 수가 없습니다.
             // 켜는 토글 자체는 기본 탭에 있어서, 여기서 바로 켜지 못하면 탭을 오가야 합니다.
-            BuildTrailHeadNoticeRow(parent);
+            BuildTrailHeadNoticeRow(section6);
 
             // 머리 항목은 통째로 한 상자에 담습니다. "원본 궤적 숨기기"가 꺼져 있으면
             // 상자 전체를 흐리게 하고 입력을 막습니다 — 슬라이더가 멀쩡해 보이는데
             // 아무 일도 안 일어나는 게 지금까지의 가장 큰 혼란 원인이었습니다.
-            var head = MakeRect("TrailHeadSection", parent);
+            var head = MakeRect("TrailHeadSection", section6);
 
             var headLayout = head.gameObject.AddComponent<VerticalLayoutGroup>();
             headLayout.spacing = 8f;
@@ -344,8 +345,7 @@ namespace WeaponAura.UI
             BuildTrailGlowSection(parent);
 
             // 도형 편집기. 여기서 그린 그림이 위의 머리·자국 모양 목록에 바로 올라옵니다.
-            BuildShapeEditor(parent);
-            BuildTrailShapeTargetRow(parent);
+            BuildTrailShapeTargetRow(section6);
         }
 
         /// <summary>
@@ -487,9 +487,9 @@ namespace WeaponAura.UI
         /// </summary>
         private void BuildTrailStampSection(Transform parent)
         {
-            AddSectionLabel(parent, L.Trail.SectionStamp);
+            var section7 = AddSectionLabel(parent, L.Trail.SectionStamp);
 
-            var stamp = MakeRect("TrailStampSection", parent);
+            var stamp = MakeRect("TrailStampSection", section7);
 
             var layout = stamp.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 8f;
@@ -536,6 +536,32 @@ namespace WeaponAura.UI
             _trailStampShapeButton.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
 
             MakeButton(shapeRow, "\u25B6", 44f, () => CycleTrailStampShape(1), ButtonColor);
+
+            MakeButton(shapeRow, L.Picker.Open, 106f, () =>
+            {
+                var profile = CurrentTrailProfile();
+                if (profile == null)
+                    return;
+
+                string current = string.IsNullOrEmpty(profile.stampTextureName)
+                    ? profile.stampShape.ToString()
+                    : profile.stampTextureName;
+
+                OpenShapePickerFor(current, BulletHeadShapes.All,
+                    shape =>
+                    {
+                        var target = CurrentTrailProfile();
+                        if (target != null)
+                            target.stampShape = shape;
+                    },
+                    name =>
+                    {
+                        var target = CurrentTrailProfile();
+                        if (target != null)
+                            target.stampTextureName = name;
+                    },
+                    SyncTrailFromProfile);
+            }, ButtonAccentColor);
 
             AddTrailSlider(stamp, L.Trail.FieldStampRate, 1f, 20f, "0.0",
                 p => p.stampRate, (p, v) => p.stampRate = v);
@@ -622,9 +648,9 @@ namespace WeaponAura.UI
         /// </summary>
         private void BuildTrailGlowSection(Transform parent)
         {
-            AddSectionLabel(parent, L.Trail.SectionGlow);
+            var section8 = AddSectionLabel(parent, L.Trail.SectionGlow);
 
-            var noticeRow = MakeRect("TrailGlowNoticeRow", parent);
+            var noticeRow = MakeRect("TrailGlowNoticeRow", section8);
             SetHeight(noticeRow, 34f);
 
             var noticeLayout = noticeRow.gameObject.AddComponent<HorizontalLayoutGroup>();
@@ -647,7 +673,7 @@ namespace WeaponAura.UI
                 RefreshTrailDisplayRow();
             }, ButtonAccentColor);
 
-            var glow = MakeRect("TrailGlowSection", parent);
+            var glow = MakeRect("TrailGlowSection", section8);
 
             var glowLayout = glow.gameObject.AddComponent<VerticalLayoutGroup>();
             glowLayout.spacing = 8f;
@@ -926,6 +952,32 @@ namespace WeaponAura.UI
             element.flexibleWidth = 1f;
 
             MakeButton(row, "▶", 44f, () => CycleTrailHeadShape(1), ButtonColor);
+
+            MakeButton(row, L.Picker.Open, 106f, () =>
+            {
+                var profile = CurrentTrailProfile();
+                if (profile == null)
+                    return;
+
+                string current = string.IsNullOrEmpty(profile.headTextureName)
+                    ? profile.headShape.ToString()
+                    : profile.headTextureName;
+
+                OpenShapePickerFor(current, BulletHeadShapes.All,
+                    shape =>
+                    {
+                        var target = CurrentTrailProfile();
+                        if (target != null)
+                            target.headShape = shape;
+                    },
+                    name =>
+                    {
+                        var target = CurrentTrailProfile();
+                        if (target != null)
+                            target.headTextureName = name;
+                    },
+                    SyncTrailFromProfile);
+            }, ButtonAccentColor);
         }
 
         /// <summary>내장 도형 + 직접 그린 도형 + 사용자 PNG를 한 줄로 이어 붙인 목록.</summary>
@@ -1155,6 +1207,10 @@ namespace WeaponAura.UI
 
         private BulletTrailProfile? CurrentTrailProfile()
         {
+            var over = CurrentOverride();
+            if (over != null)
+                return over.trail;
+
             return BulletTrailProfiles.Get(_editingTrailGrade);
         }
 

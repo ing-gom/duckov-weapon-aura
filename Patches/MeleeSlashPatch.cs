@@ -156,7 +156,8 @@ namespace WeaponAura.Patches
                 Item? item = melee.Item;
                 int quality = WeaponHelper.GetQuality(item);
 
-                var profile = MeleeSlashProfiles.Resolve(quality);
+                // 이 근접무기에 전용 설정이 있으면 등급보다 우선합니다.
+                var profile = MeleeSlashProfiles.Resolve(quality, item != null ? item.TypeID : 0);
                 if (profile == null || !profile.enabled)
                     return;
 
@@ -178,6 +179,10 @@ namespace WeaponAura.Patches
 
                 if (mode == MeleeSlashMode.Replace)
                 {
+                    // 레이어는 모드와 무관하게 나갑니다. 지우는 모드에서는 얹어 갈 호가
+                    // 없으니 그 자리에서 바로 뿜습니다.
+                    MeleeSlashSystem.PlayLayers(null, profile, position, rotation);
+
                     foreach (var go in _spawned)
                         UnityEngine.Object.Destroy(go);
 
@@ -187,6 +192,12 @@ namespace WeaponAura.Patches
                     MeleeSlashSystem.SpawnAt(position, rotation, profile);
                     return;
                 }
+
+                // 호가 남는 모드에서는 호 위에서 뿜습니다 — 참격 오브젝트의 트랜스폼은
+                // 지름 8m짜리 호의 <b>회전 중심</b>이라, 거기 뿜으면 이펙트만 저 멀리
+                // 가운데 뜹니다. 호는 이 프레임에 아직 안 나와 있을 수 있어서
+                // 뿜는 시점은 MeleeSlashSystem이 잡습니다.
+                MeleeSlashSystem.PlayLayers(_spawned[0], profile, position, rotation);
 
                 foreach (var go in _spawned)
                 {

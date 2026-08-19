@@ -391,7 +391,7 @@ namespace WeaponAura.Helpers
 
         private static string? ProficiencySettingsRoot()
         {
-            string? folder = WeaponAuraResources.GetTextureFolder();
+            string? folder = WeaponAuraResources.GetUserTextureFolder();
             if (string.IsNullOrEmpty(folder))
                 return null;
 

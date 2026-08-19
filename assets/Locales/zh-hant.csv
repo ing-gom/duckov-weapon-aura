@@ -38,7 +38,7 @@ display_intense,強
 action_save,儲存設定
 action_random,隨機
 action_reset_defaults,回復預設
-action_saved,已儲存。下次啟動時會自動套用。
+action_saved,已儲存。重新啟動後仍會保留這些設定。
 action_save_failed,儲存失敗。
 action_random_applied,已為品質 {0} 套用隨機效果（種子 {1}）。
 action_reset_done,已回復預設值。需儲存才能保留。
@@ -286,7 +286,6 @@ section_basic,基礎
 section_advanced,進階
 section_surface,表面與雜訊
 section_motion,運動與拖尾
-section_flipbook,序列影格（拼貼圖）
 section_ring,光環（環繞光點）
 section_share,設定分享
 field_roundness,圓潤度
@@ -295,9 +294,6 @@ field_noise_strength,雜訊強度
 field_noise_frequency,雜訊頻率
 field_rotation_speed,旋轉速度
 field_drag,減速
-field_tiles_x,橫向格數
-field_tiles_y,縱向格數
-field_flipbook_fps,播放速度（0=依壽命）
 field_ring_on,開啟光環
 field_ring_off,關閉光環
 field_ring_count,光點數量
@@ -315,3 +311,110 @@ share_failed,無法讀取該設定。
 field_ring_roll,光環側傾
 field_ring_texture,光環圖案
 field_ring_texture_same,與光環相同
+target_label,編輯對象
+target_grade,按品質
+target_class,按類別
+target_weapon,單把武器
+target_pick,選擇武器
+target_editing,正在編輯：{0}
+target_using_override,使用專屬設定
+target_using_grade,使用品質預設值
+target_remove,刪除專屬設定
+target_removed,已刪除 {0} 的專屬設定
+target_created,已建立 {0} 的專屬設定
+target_pruned,已清理未修改的專屬設定
+target_melee,近戰
+target_need_world,進入遊戲後才能查看武器列表
+library_title,選擇武器
+library_search,搜尋
+library_all,全部
+library_empty,沒有符合條件的武器
+library_close,關閉
+library_count,{0} 把
+library_held,目前手持
+library_marked,已有專屬設定
+confirm_title,未儲存的變更
+confirm_body,有未儲存的變更。不儲存直接關閉會回復到開啟本視窗前的狀態。
+confirm_save,儲存並關閉
+confirm_discard,不儲存直接關閉
+confirm_cancel,取消
+confirm_reverted,已還原未儲存的變更
+target_class_on,已啟用類別設定
+target_class_off,啟用類別設定
+target_class_disabled,類別設定已關閉 — 請先啟用
+particles_tab,武器粒子
+particles_enable,啟用武器粒子
+particles_grade_enable,此品質啟用
+particles_layers,圖層
+particles_add_layer,新增圖層
+particles_remove_layer,刪除圖層
+particles_layer_full,最多 {0} 個圖層
+particles_layer_empty,請先新增一個圖層
+particles_layer_on,開
+particles_layer_off,關
+particles_shape,形狀
+particles_anchor,發射位置
+particles_anchor_whole,整把武器
+particles_anchor_muzzle,槍口
+particles_anchor_body,本體
+particles_anchor_barrel,槍管
+particles_field_intensity,亮度
+particles_field_size,粒子大小
+particles_field_rate,發射量
+particles_field_lifetime,壽命
+particles_field_speed,速度
+particles_field_spread,擴散
+particles_field_rise,上升
+particles_field_offset,前後位置
+particles_field_pulse,脈動幅度
+particles_field_pulse_speed,脈動週期
+library_marked_only,僅專屬
+target_editing_off,正在編輯：{0} — 此武器已關閉
+particles_live_count,生效中
+particles_direction,發射方向
+particles_dir_sphere,四周
+particles_dir_forward,前
+particles_dir_backward,後
+particles_dir_up,上
+particles_dir_down,下
+particles_field_cone,張開角度
+particles_lifecycle,隨壽命變化
+particles_use_color_end,單獨設定結束色
+particles_color_end,結束色
+particles_field_alpha_start,起始透明度
+particles_field_alpha_end,結束透明度
+particles_field_size_start,起始大小
+particles_field_size_end,結束大小
+particles_look,外觀
+particles_stretch,拉長
+particles_field_stretch,拉長程度
+particles_field_noise,擾動
+particles_field_spin,旋轉
+particles_offset,位置微調
+particles_offset_x,左右
+particles_offset_y,上下
+particles_offset_z,前後
+particles_show_gizmo,顯示發射位置
+particles_basics,顏色與數量
+particles_pulse_section,脈動
+shape_list_title,已建立的形狀
+shape_list_empty,尚未建立形狀
+shape_edit,編輯
+shape_delete,刪除
+share_paste_title,貼上設定代碼
+share_paste_help,貼上代碼並確認後再套用。套用會覆蓋目前正在編輯的設定。
+share_paste_apply,套用
+share_paste_clipboard,從剪貼簿取得
+share_paste_ready,包含：{0}
+picker_title,選擇形狀
+picker_open,選擇形狀
+share_export_label,匯出
+share_import_label,匯入
+share_copy_tab,僅複製本頁
+share_copy_all,複製全部
+share_copied_tab,已複製本頁設定（{0} 字）
+share_copied_all,已複製全部設定（{0} 字）
+share_pasted_count,已套用：{0}
+share_open,設定分享
+particles_no_layers,此頁沒有圖層
+particles_arc_spread,沿弧線擴散

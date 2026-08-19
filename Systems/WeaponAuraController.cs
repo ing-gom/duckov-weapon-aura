@@ -521,6 +521,20 @@ namespace WeaponAura.Systems
                 || renderer is BillboardRenderer)
                 return false;
 
+            // 점광원의 빛 덩어리는 무기 실루엣이 아닙니다.
+            //
+            // 이게 없으면 불꽃 AK-47 같은 속성 무기에서 오라가 총이 아니라 빛을 감쌉니다.
+            // 본체 후보는 "길이 순"으로 고르는데, 빛 덩어리는 구(2×2×2 메시)를 크게 키워
+            // 놓은 것이라 실측에서 6.77m로 잡혔습니다. 총열(WPN_AK47)이 0.79m니까 경쟁이
+            // 안 됩니다. 그래서 오라가 6.8m짜리 공을 감싸고, 빛이 이상하게 번져 보입니다.
+            //
+            // 이름이 아니라 컴포넌트로 거릅니다 — 게임이 오브젝트 이름을 바꿔도 따라갑니다.
+            // (일반 총에도 SodaPointLight가 0.75m로 붙어 있어서 총열 0.79m와 간발의 차입니다.
+            //  즉 이건 속성 무기만의 문제가 아니라 원래 아슬아슬했던 것입니다)
+            if (renderer.GetComponent<SodaPointLight>() != null
+                || renderer.GetComponentInParent<SodaPointLight>() != null)
+                return false;
+
             string name = renderer.gameObject.name;
             return !name.StartsWith("WeaponAura_") && name != "Silhouette";
         }
@@ -944,7 +958,6 @@ namespace WeaponAura.Systems
             rotationOverLifetime.enabled = Mathf.Abs(_profile.rotationSpeed) > 0.01f;
             rotationOverLifetime.z = new ParticleSystem.MinMaxCurve(_profile.rotationSpeed * Mathf.Deg2Rad);
 
-            ApplyFlipbook(_wrap);
             ApplyTrails(_wrap);
             ApplyDrag(_wrap);
 
@@ -989,42 +1002,6 @@ namespace WeaponAura.Systems
             }
 
             ConfigureRenderer(_wrap.GetComponent<ParticleSystemRenderer>(), _profile);
-        }
-
-        /// <summary>플립북(스프라이트 시트) 설정</summary>
-        private void ApplyFlipbook(ParticleSystem ps)
-        {
-            if (_profile == null)
-                return;
-
-            int tilesX = Mathf.Max(1, _profile.tilesX);
-            int tilesY = Mathf.Max(1, _profile.tilesY);
-
-            var textureSheet = ps.textureSheetAnimation;
-            bool useSheet = tilesX > 1 || tilesY > 1;
-            textureSheet.enabled = useSheet;
-            if (!useSheet)
-                return;
-
-            textureSheet.numTilesX = tilesX;
-            textureSheet.numTilesY = tilesY;
-            textureSheet.animation = ParticleSystemAnimationType.WholeSheet;
-
-            if (_profile.flipbookFps > 0.01f)
-            {
-                // 초당 프레임 고정: 수명 동안 몇 번 돌지로 환산
-                float lifetime = Mathf.Max(0.05f, _profile.lifetime);
-                int frames = tilesX * tilesY;
-                textureSheet.timeMode = ParticleSystemAnimationTimeMode.Lifetime;
-                textureSheet.cycleCount = Mathf.Max(1,
-                    Mathf.RoundToInt(_profile.flipbookFps * lifetime / Mathf.Max(1, frames)));
-            }
-            else
-            {
-                // 수명에 맞춰 1회 재생
-                textureSheet.timeMode = ParticleSystemAnimationTimeMode.Lifetime;
-                textureSheet.cycleCount = 1;
-            }
         }
 
         /// <summary>
@@ -1108,7 +1085,6 @@ namespace WeaponAura.Systems
             var shape = _ring.shape;
             shape.radius = Mathf.Max(0.01f, _profile.ringRadius);
 
-            ApplyFlipbook(_ring);
             ConfigureRenderer(_ring.GetComponent<ParticleSystemRenderer>(), _profile, _profile.ringTexture);
         }
 
@@ -1373,9 +1349,11 @@ namespace WeaponAura.Systems
             Texture2D? result = null;
             try
             {
-                string? folder = GetTextureFolder();
-                if (!string.IsNullOrEmpty(folder))
+                foreach (string folder in GetTextureFolders())
                 {
+                    if (result != null)
+                        break;
+
                     foreach (string extension in new[] { ".png", ".jpg", ".jpeg", ".tga" })
                     {
                         string path = System.IO.Path.Combine(folder, textureName + extension);
@@ -1420,9 +1398,11 @@ namespace WeaponAura.Systems
             var names = new List<string> { "" };
             try
             {
-                string? folder = GetTextureFolder();
-                if (!string.IsNullOrEmpty(folder) && System.IO.Directory.Exists(folder))
+                foreach (string folder in GetTextureFolders())
                 {
+                    if (!System.IO.Directory.Exists(folder))
+                        continue;
+
                     foreach (string file in System.IO.Directory.GetFiles(folder))
                     {
                         string extension = System.IO.Path.GetExtension(file).ToLowerInvariant();
@@ -1451,12 +1431,105 @@ namespace WeaponAura.Systems
         }
 
         /// <summary>텍스처 폴더 경로 (모드 루트/assets/vfx_textures)</summary>
-        public static string? GetTextureFolder()
+        /// <summary>
+        /// 사용자 이미지를 둘 수 있는 폴더 — <b>여러 곳</b>입니다.
+        ///
+        /// 모드는 두 자리에 있을 수 있습니다. 창작마당으로 받으면 workshop 폴더에서 돌고,
+        /// 직접 넣으면 게임의 Mods 폴더에서 돕니다. 어느 쪽에서 돌든 <b>다른 쪽에 넣어 둔
+        /// 이미지도 보여야</b> 합니다 — 개발용으로 로컬에 넣어 둔 것을 창작마당 판으로
+        /// 바꿔 켰다고 못 쓰게 되면 곤란합니다.
+        ///
+        /// 그리고 모드 폴더는 재설치·갱신 때 <b>통째로 지워집니다</b>(설정 파일에서 이미
+        /// 겪은 문제입니다). 그래서 사용자 데이터 폴더를 맨 앞에 둡니다 — 거기 넣은 것은
+        /// 업데이트에도 남습니다.
+        /// </summary>
+        public static List<string> GetTextureFolders()
         {
-            string? root = GetModRoot();
+            var folders = new List<string>();
+
+            void Add(string? path)
+            {
+                if (string.IsNullOrEmpty(path))
+                    return;
+
+                if (!folders.Contains(path!))
+                    folders.Add(path!);
+            }
+
+            // 1순위 — 사용자 데이터 폴더. 업데이트에도 남습니다.
+            try
+            {
+                string user = System.IO.Path.Combine(
+                    System.IO.Path.Combine(Application.persistentDataPath, "WeaponAura"), TextureFolder);
+
+                System.IO.Directory.CreateDirectory(user);
+                Add(user);
+            }
+            catch
+            {
+                // 만들지 못해도 아래 폴더들은 계속 봅니다.
+            }
+
+            // 2순위 — 지금 돌고 있는 모드 폴더 (창작마당이든 로컬이든 여기로 잡힙니다)
+            AddModFolder(GetModRoot());
+
+            // 3순위 — 게임 Mods 폴더의 같은 이름 모드. 창작마당 판으로 돌 때 로컬에
+            // 넣어 둔 이미지를 찾기 위한 길입니다.
+            try
+            {
+                string? dataPath = Application.dataPath;
+                if (!string.IsNullOrEmpty(dataPath))
+                {
+                    AddModFolder(System.IO.Path.Combine(
+                        System.IO.Path.Combine(dataPath, "Mods"), "WeaponAura"));
+
+                    string? gameRoot = System.IO.Path.GetDirectoryName(dataPath);
+                    if (!string.IsNullOrEmpty(gameRoot))
+                    {
+                        AddModFolder(System.IO.Path.Combine(
+                            System.IO.Path.Combine(gameRoot!, "Mods"), "WeaponAura"));
+                    }
+                }
+            }
+            catch
+            {
+                // 경로를 못 만들어도 나머지는 씁니다.
+            }
+
+            return folders;
+
+            void AddModFolder(string? root)
+            {
+                foreach (var path in TexturePathsOf(root))
+                    Add(path);
+            }
+        }
+
+        /// <summary>
+        /// 모드 폴더 하나에서 이미지가 있을 수 있는 자리 — <b>두 군데</b>입니다.
+        ///
+        /// 빌드 방식에 따라 짐이 놓이는 모양이 다릅니다. SDK가 게임에 바로 설치할 때는
+        /// <c>assets/</c> 안을 <b>모드 루트로 펼쳐서</b> 복사하므로 <c>&lt;모드&gt;/vfx_textures</c>가
+        /// 되고, 창작마당에 올리는 묶음(release)은 <c>assets/</c>를 그대로 들고 가므로
+        /// <c>&lt;모드&gt;/assets/vfx_textures</c>가 됩니다.
+        ///
+        /// 한쪽만 보면 <b>같이 넣어 보낸 PNG를 못 찾습니다</b> — 개발 중 설치판에서
+        /// 내장 도형만 나오던 원인이 이것입니다. 둘 다 봅니다.
+        /// </summary>
+        private static IEnumerable<string> TexturePathsOf(string? root)
+        {
             if (string.IsNullOrEmpty(root))
-                return null;
-            return System.IO.Path.Combine(System.IO.Path.Combine(root!, "assets"), TextureFolder);
+                yield break;
+
+            yield return System.IO.Path.Combine(root!, TextureFolder);
+            yield return System.IO.Path.Combine(System.IO.Path.Combine(root!, "assets"), TextureFolder);
+        }
+
+        /// <summary>이미지를 넣을 곳으로 안내할 폴더 (사용자 데이터 폴더).</summary>
+        public static string? GetUserTextureFolder()
+        {
+            var folders = GetTextureFolders();
+            return folders.Count > 0 ? folders[0] : null;
         }
 
         /// <summary>모드 루트 폴더 (ModInfo 우선, 실패 시 어셈블리 위치에서 상위 탐색)</summary>

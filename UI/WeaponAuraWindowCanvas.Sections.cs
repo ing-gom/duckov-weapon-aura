@@ -21,17 +21,25 @@ namespace WeaponAura.UI
             public Button BasicButton = null!;
             public Button AdvancedButton = null!;
 
-            public void Select(bool advanced)
+
+            public void Select(bool advanced) => Select(advanced ? 1 : 0);
+
+            /// <summary>0=기본 · 1=고급</summary>
+            public void Select(int index)
             {
                 if (Basic != null)
-                    Basic.SetActive(!advanced);
+                    Basic.SetActive(index == 0);
                 if (Advanced != null)
-                    Advanced.SetActive(advanced);
+                    Advanced.SetActive(index == 1);
 
-                if (BasicButton != null && BasicButton.targetGraphic != null)
-                    BasicButton.targetGraphic.color = advanced ? ButtonColor : ButtonAccentColor;
-                if (AdvancedButton != null && AdvancedButton.targetGraphic != null)
-                    AdvancedButton.targetGraphic.color = advanced ? ButtonAccentColor : ButtonColor;
+                Paint(BasicButton, index == 0);
+                Paint(AdvancedButton, index == 1);
+            }
+
+            private static void Paint(Button? button, bool selected)
+            {
+                if (button != null && button.targetGraphic != null)
+                    button.targetGraphic.color = selected ? ButtonAccentColor : ButtonColor;
             }
         }
 
@@ -66,9 +74,9 @@ namespace WeaponAura.UI
             rowLayout.childForceExpandWidth = true;
 
             switcher.BasicButton = MakeButton(row, L.Section.Basic, 0f,
-                () => switcher.Select(false), ButtonColor);
+                () => switcher.Select(0), ButtonColor);
             switcher.AdvancedButton = MakeButton(row, L.Section.Advanced, 0f,
-                () => switcher.Select(true), ButtonColor);
+                () => switcher.Select(1), ButtonColor);
 
             var scrollGo = MakeRect("Scroll", column);
             scrollGo.gameObject.AddComponent<LayoutElement>().flexibleHeight = 1f;

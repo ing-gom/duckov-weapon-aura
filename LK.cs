@@ -304,6 +304,136 @@ public static class LK
         public const string Error = "preview_error";
     }
 
+    /// <summary>모양 고르기 창</summary>
+    public static class Picker
+    {
+        public const string Title = "picker_title";
+        public const string Open = "picker_open";
+    }
+
+    /// <summary>도형 목록 (편집기 모달 왼쪽)</summary>
+    public static class Shape
+    {
+        public const string ListTitle = "shape_list_title";
+        public const string ListEmpty = "shape_list_empty";
+        public const string Edit = "shape_edit";
+        public const string Delete = "shape_delete";
+    }
+
+    /// <summary>무기 알갱이 탭 — 겹 단위로 쌓는 파티클</summary>
+    public static class Particles
+    {
+        public const string Tab = "particles_tab";
+        public const string Enable = "particles_enable";
+        public const string GradeEnable = "particles_grade_enable";
+        public const string Layers = "particles_layers";
+        public const string LiveCount = "particles_live_count";
+        public const string AddLayer = "particles_add_layer";
+        public const string RemoveLayer = "particles_remove_layer";
+        public const string LayerFull = "particles_layer_full";
+        public const string LayerEmpty = "particles_layer_empty";
+        public const string NoLayers = "particles_no_layers";
+        public const string LayerOn = "particles_layer_on";
+        public const string LayerOff = "particles_layer_off";
+        public const string Shape = "particles_shape";
+        public const string Anchor = "particles_anchor";
+        public const string AnchorWhole = "particles_anchor_whole";
+        public const string AnchorMuzzle = "particles_anchor_muzzle";
+        public const string AnchorBody = "particles_anchor_body";
+        public const string AnchorBarrel = "particles_anchor_barrel";
+        public const string FieldIntensity = "particles_field_intensity";
+        public const string FieldSize = "particles_field_size";
+        public const string FieldRate = "particles_field_rate";
+        public const string FieldLifetime = "particles_field_lifetime";
+        public const string FieldSpeed = "particles_field_speed";
+        public const string FieldSpread = "particles_field_spread";
+        public const string FieldRise = "particles_field_rise";
+        public const string FieldOffset = "particles_field_offset";
+        public const string Offset = "particles_offset";
+        public const string OffsetX = "particles_offset_x";
+        public const string OffsetY = "particles_offset_y";
+        public const string OffsetZ = "particles_offset_z";
+        public const string ShowGizmo = "particles_show_gizmo";
+        public const string FieldPulse = "particles_field_pulse";
+        public const string FieldPulseSpeed = "particles_field_pulse_speed";
+
+        // ── 방향 ────────────────────────────────────────────
+        public const string Direction = "particles_direction";
+        public const string DirSphere = "particles_dir_sphere";
+        public const string DirForward = "particles_dir_forward";
+        public const string DirBackward = "particles_dir_backward";
+        public const string DirUp = "particles_dir_up";
+        public const string DirDown = "particles_dir_down";
+        public const string FieldCone = "particles_field_cone";
+
+        // ── 수명에 따른 변화 ────────────────────────────────
+        public const string Lifecycle = "particles_lifecycle";
+        public const string UseColorEnd = "particles_use_color_end";
+        public const string ColorEnd = "particles_color_end";
+        public const string FieldAlphaStart = "particles_field_alpha_start";
+        public const string FieldAlphaEnd = "particles_field_alpha_end";
+        public const string FieldSizeStart = "particles_field_size_start";
+        public const string FieldSizeEnd = "particles_field_size_end";
+
+        // ── 모양새 ──────────────────────────────────────────
+        public const string Look = "particles_look";
+        public const string Basics = "particles_basics";
+        public const string PulseSection = "particles_pulse_section";
+        public const string ArcSpread = "particles_arc_spread";
+        public const string Stretch = "particles_stretch";
+        public const string FieldStretch = "particles_field_stretch";
+        public const string FieldNoise = "particles_field_noise";
+        public const string FieldSpin = "particles_field_spin";
+    }
+
+    /// <summary>저장하지 않고 닫으려 할 때의 확인 창</summary>
+    public static class Confirm
+    {
+        public const string Title = "confirm_title";
+        public const string Body = "confirm_body";
+        public const string Save = "confirm_save";
+        public const string Discard = "confirm_discard";
+        public const string Cancel = "confirm_cancel";
+        public const string Reverted = "confirm_reverted";
+    }
+
+    /// <summary>편집 대상(등급 / 분류 / 개별 무기) 전환 줄</summary>
+    public static class Target
+    {
+        public const string Label = "target_label";
+        public const string Grade = "target_grade";
+        public const string Class = "target_class";
+        public const string Weapon = "target_weapon";
+        public const string Pick = "target_pick";
+        public const string Editing = "target_editing";
+        public const string EditingOff = "target_editing_off";
+        public const string UsingOverride = "target_using_override";
+        public const string UsingGrade = "target_using_grade";
+        public const string Remove = "target_remove";
+        public const string Removed = "target_removed";
+        public const string Created = "target_created";
+        public const string Pruned = "target_pruned";
+        public const string Melee = "target_melee";
+        public const string ClassOn = "target_class_on";
+        public const string ClassOff = "target_class_off";
+        public const string ClassDisabled = "target_class_disabled";
+        public const string NeedWorld = "target_need_world";
+    }
+
+    /// <summary>무기 라이브러리 창</summary>
+    public static class Library
+    {
+        public const string Title = "library_title";
+        public const string Search = "library_search";
+        public const string All = "library_all";
+        public const string Empty = "library_empty";
+        public const string Close = "library_close";
+        public const string Count = "library_count";
+        public const string Held = "library_held";
+        public const string Marked = "library_marked";
+        public const string MarkedOnly = "library_marked_only";
+    }
+
     public static class Tier
     {
         public const string SectionLabel = "tier_section_label";
@@ -352,7 +482,6 @@ public static class LK
 
         public const string Surface = "section_surface";
         public const string Motion = "section_motion";
-        public const string Flipbook = "section_flipbook";
         public const string Ring = "section_ring";
         public const string Share = "section_share";
     }
@@ -406,9 +535,6 @@ public static class LK
         public const string NoiseFrequency = "field_noise_frequency";
         public const string RotationSpeed = "field_rotation_speed";
         public const string Drag = "field_drag";
-        public const string TilesX = "field_tiles_x";
-        public const string TilesY = "field_tiles_y";
-        public const string FlipbookFps = "field_flipbook_fps";
 
         public const string RingOn = "field_ring_on";
         public const string RingOff = "field_ring_off";
@@ -442,6 +568,19 @@ public static class LK
     {
         public const string Copy = "share_copy";
         public const string Paste = "share_paste";
+        public const string PasteTitle = "share_paste_title";
+        public const string PasteHelp = "share_paste_help";
+        public const string PasteApply = "share_paste_apply";
+        public const string PasteFromClipboard = "share_paste_clipboard";
+        public const string PasteReady = "share_paste_ready";
+        public const string ExportLabel = "share_export_label";
+        public const string ImportLabel = "share_import_label";
+        public const string CopyTab = "share_copy_tab";
+        public const string CopyAll = "share_copy_all";
+        public const string CopiedTab = "share_copied_tab";
+        public const string CopiedAll = "share_copied_all";
+        public const string PastedCount = "share_pasted_count";
+        public const string Open = "share_open";
         public const string Copied = "share_copied";
         public const string Pasted = "share_pasted";
         public const string NotFound = "share_not_found";

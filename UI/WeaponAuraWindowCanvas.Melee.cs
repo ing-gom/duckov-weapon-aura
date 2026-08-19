@@ -142,6 +142,7 @@ namespace WeaponAura.UI
             int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)TierColumns));
 
             var grid = MakeRect("MeleeGradeGrid", parent);
+            RegisterGradeSelector(grid.gameObject);
             SetHeight(grid, rows * TierCellHeight + (rows - 1) * TierCellSpacing);
 
             var layout = grid.gameObject.AddComponent<GridLayoutGroup>();
@@ -173,13 +174,13 @@ namespace WeaponAura.UI
         {
             _meleeRows.Clear();
 
-            AddSectionLabel(parent, L.Section.Display);
-            BuildMeleeDisplayRow(parent);
+            var section1 = AddSectionLabel(parent, L.Section.Display);
+            BuildMeleeDisplayRow(section1);
 
             // 참격 호 자체의 색. 흩뿌림과 따로 둡니다 — 알갱이가 한 장뿐이라
             // "안쪽~바깥" 두 색이 성립하지 않고, 실제로 흰색만 나왔습니다.
-            AddSectionLabel(parent, L.Melee.SectionColorSlash);
-            _meleePickerSlash = AddColorPicker(parent, color =>
+            var section2 = AddSectionLabel(parent, L.Melee.SectionColorSlash);
+            _meleePickerSlash = AddColorPicker(section2, color =>
             {
                 var profile = CurrentMeleeProfile();
                 if (profile == null)
@@ -197,8 +198,8 @@ namespace WeaponAura.UI
         /// </summary>
         private void BuildMeleeAdvanced(Transform parent)
         {
-            AddSectionLabel(parent, L.Melee.SectionColorInner);
-            _meleePickerInner = AddColorPicker(parent, color =>
+            var section3 = AddSectionLabel(parent, L.Melee.SectionColorInner);
+            _meleePickerInner = AddColorPicker(section3, color =>
             {
                 var profile = CurrentMeleeProfile();
                 if (profile == null)
@@ -208,8 +209,8 @@ namespace WeaponAura.UI
                 HighlightMeleeGradeButton();
             });
 
-            AddSectionLabel(parent, L.Melee.SectionColorOuter);
-            _meleePickerOuter = AddColorPicker(parent, color =>
+            var section4 = AddSectionLabel(parent, L.Melee.SectionColorOuter);
+            _meleePickerOuter = AddColorPicker(section4, color =>
             {
                 var profile = CurrentMeleeProfile();
                 if (profile == null)
@@ -219,61 +220,62 @@ namespace WeaponAura.UI
                 HighlightMeleeGradeButton();
             });
 
-            AddSectionLabel(parent, L.Melee.SectionLook);
-            BuildMeleeShapeRow(parent);
-            BuildMeleePresetRow(parent);
-            BuildShapeEditor(parent);
+            var section5 = AddSectionLabel(parent, L.Melee.SectionLook);
+            BuildMeleeShapeRow(section5);
+            BuildMeleePresetRow(section5);
 
-            AddSectionLabel(parent, L.Melee.SectionSlash);
+            var section6 = AddSectionLabel(parent, L.Melee.SectionSlash);
 
             // 휘두를 때 그려지는 호의 모양 자체를 갈아 끼웁니다.
-            BuildMeleeSlashShapeRow(parent);
+            BuildMeleeSlashShapeRow(section6);
 
-            AddMeleeSlider(parent, L.Melee.FieldSlashAlpha, 0f, 1f, "0.00",
+            AddMeleeSlider(section6, L.Melee.FieldSlashAlpha, 0f, 1f, "0.00",
                 p => p.slashAlpha, (p, v) => p.slashAlpha = v);
-            AddMeleeSlider(parent, L.Melee.FieldSlashIntensity, 0.5f, 3f, "0.00",
+            AddMeleeSlider(section6, L.Melee.FieldSlashIntensity, 0.5f, 3f, "0.00",
                 p => p.slashIntensity, (p, v) => p.slashIntensity = v);
 
-            AddSectionLabel(parent, L.Melee.SectionSparks);
-            AddMeleeSlider(parent, L.Melee.FieldAlpha, 0f, 1f, "0.00",
+
+            var section7 = AddSectionLabel(parent, L.Melee.SectionSparks);
+            AddMeleeSlider(section7, L.Melee.FieldAlpha, 0f, 1f, "0.00",
                 p => p.alpha, (p, v) => p.alpha = v);
-            AddMeleeSlider(parent, L.Melee.FieldIntensity, 0.5f, 3f, "0.00",
+            AddMeleeSlider(section7, L.Melee.FieldIntensity, 0.5f, 3f, "0.00",
                 p => p.intensity, (p, v) => p.intensity = v);
-            AddMeleeSlider(parent, L.Melee.FieldSparkCount, 0f, 40f, "0",
+            AddMeleeSlider(section7, L.Melee.FieldSparkCount, 0f, 40f, "0",
                 p => p.sparkCount, (p, v) => p.sparkCount = Mathf.RoundToInt(v));
+
             // 하트·별은 파편보다 훨씬 커야 모양이 보입니다. 넉넉히 열어 둡니다.
-            AddMeleeSlider(parent, L.Melee.FieldSparkSize, 0.02f, 2f, "0.000",
+            AddMeleeSlider(section7, L.Melee.FieldSparkSize, 0.02f, 2f, "0.000",
                 p => p.sparkSize, (p, v) => p.sparkSize = v);
             // 참격 궤적 위에서 생기므로, 이건 "호에서 얼마나 벗어나는지"입니다.
             // 크게 올리면 그 순간 참격과 무관한 폭발이 됩니다.
-            AddMeleeSlider(parent, L.Melee.FieldSparkDistance, 0f, 3f, "0.00",
+            AddMeleeSlider(section7, L.Melee.FieldSparkDistance, 0f, 3f, "0.00",
                 p => p.sparkDistance, (p, v) => p.sparkDistance = v);
             // 알갱이를 얹을 고리의 반지름 배율. 참격 그림이 판 안에서 차지하는 비율은
             // 텍스처 나름이라, 알갱이가 호에서 떠 보이면 이걸로 당기거나 밀면 됩니다.
-            AddMeleeSlider(parent, L.Melee.FieldSparkRing, 0f, 1.5f, "0.00",
+            AddMeleeSlider(section7, L.Melee.FieldSparkRing, 0f, 1.5f, "0.00",
                 p => p.sparkRing, (p, v) => p.sparkRing = v);
             // 호가 판 위 어느 쪽에 그려져 있는지는 텍스처 나름입니다. 비껴 있으면 돌려 맞춥니다.
-            AddMeleeSlider(parent, L.Melee.FieldSlashFacing, -180f, 180f, "0",
+            AddMeleeSlider(section7, L.Melee.FieldSlashFacing, -180f, 180f, "0",
                 p => p.slashFacing, (p, v) => p.slashFacing = v);
             // 호가 그려지는 동안 나눠 뿌리는 시간. 0에 가까우면 시작점에 뭉칩니다.
-            AddMeleeSlider(parent, L.Melee.FieldSparkWindow, 0.01f, 0.6f, "0.00",
+            AddMeleeSlider(section7, L.Melee.FieldSparkWindow, 0.01f, 0.6f, "0.00",
                 p => p.sparkEmitWindow, (p, v) => p.sparkEmitWindow = v);
             // 0이면 참격 표면에 수직으로만, 1이면 제멋대로 흩어집니다.
-            AddMeleeSlider(parent, L.Melee.FieldSparkScatter, 0f, 1f, "0.00",
+            AddMeleeSlider(section7, L.Melee.FieldSparkScatter, 0f, 1f, "0.00",
                 p => p.sparkScatter, (p, v) => p.sparkScatter = v);
             // 부채꼴 전체 폭. 참격을 지우는 `흩뿌림만` 모드에서만 쓰입니다
             // (남겨 두는 모드에서는 참격 호 자체가 뿌려지는 자리라 부채꼴이 필요 없습니다).
-            AddMeleeSlider(parent, L.Melee.FieldSparkArc, 0f, 180f, "0",
+            AddMeleeSlider(section7, L.Melee.FieldSparkArc, 0f, 180f, "0",
                 p => p.sparkArc, (p, v) => p.sparkArc = v);
             // 중력 배율이 아니라 최종 높이(m). 바닥을 뚫거나 끝없이 솟는 조합이 나올 수 없습니다.
-            AddMeleeSlider(parent, L.Melee.FieldSparkRise, -2f, 2f, "0.00",
+            AddMeleeSlider(section7, L.Melee.FieldSparkRise, -2f, 2f, "0.00",
                 p => p.sparkRise, (p, v) => p.sparkRise = v);
-            AddMeleeSlider(parent, L.Melee.FieldSparkSpin, -720f, 720f, "0",
+            AddMeleeSlider(section7, L.Melee.FieldSparkSpin, -720f, 720f, "0",
                 p => p.sparkSpin, (p, v) => p.sparkSpin = v);
-            AddMeleeSlider(parent, L.Melee.FieldSparkDuration, 0.05f, 1.5f, "0.00",
+            AddMeleeSlider(section7, L.Melee.FieldSparkDuration, 0.05f, 1.5f, "0.00",
                 p => p.sparkDuration, (p, v) => p.sparkDuration = v);
 
-            BuildMeleeStretchRow(parent);
+            BuildMeleeStretchRow(section7);
         }
 
         /// <summary>
@@ -299,6 +301,32 @@ namespace WeaponAura.UI
             _meleeShapeLabel.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
 
             MakeButton(row, L.Muzzle.ShapeNext, 56f, () => CycleMeleeShape(1), ButtonColor);
+
+            MakeButton(row, L.Picker.Open, 110f, () =>
+            {
+                var profile = CurrentMeleeProfile();
+                if (profile == null)
+                    return;
+
+                string current = string.IsNullOrEmpty(profile.textureName)
+                    ? profile.shape.ToString()
+                    : profile.textureName;
+
+                OpenShapePickerFor(current, MuzzleFlashShapes.All,
+                    shape =>
+                    {
+                        var target = CurrentMeleeProfile();
+                        if (target != null)
+                            target.shape = shape;
+                    },
+                    name =>
+                    {
+                        var target = CurrentMeleeProfile();
+                        if (target != null)
+                            target.textureName = name;
+                    },
+                    RefreshMeleeShapeLabel);
+            }, ButtonAccentColor);
 
             // 폴더에 PNG를 새로 넣었을 때 게임을 껐다 켜지 않아도 되게.
             MakeButton(row, L.Muzzle.ShapeRescan, 56f, () =>
@@ -337,6 +365,21 @@ namespace WeaponAura.UI
             _meleeSlashShapeLabel.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
 
             MakeButton(row, L.Muzzle.ShapeNext, 56f, () => CycleSlashShape(1), ButtonColor);
+
+            MakeButton(row, L.Picker.Open, 110f, () =>
+            {
+                var profile = CurrentMeleeProfile();
+                if (profile == null)
+                    return;
+
+                OpenShapePickerForName(profile.slashTexture ?? "", picked =>
+                {
+                    var target = CurrentMeleeProfile();
+                    if (target != null)
+                        target.slashTexture = picked;
+                },
+                RefreshSlashShapeLabel);
+            }, ButtonAccentColor);
         }
 
         /// <summary>
@@ -652,6 +695,10 @@ namespace WeaponAura.UI
 
         private MeleeSlashProfile? CurrentMeleeProfile()
         {
+            var over = CurrentOverride();
+            if (over != null)
+                return over.melee;
+
             return MeleeSlashProfiles.Get(_editingMeleeGrade);
         }
 

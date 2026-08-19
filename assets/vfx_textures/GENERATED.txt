@@ -1,0 +1,51 @@
+이 폴더의 PNG 52개에 대하여
+================================
+
+출처와 라이선스
+---------------
+전부 절차적으로 생성된 파일입니다. 외부에서 가져온 이미지가 아니라, 파이썬
+코드가 수식으로 그려 낸 결과물입니다. 따라서 README.txt가 경고하는 재배포
+라이선스 문제가 없습니다 — 이 모드와 함께 자유롭게 배포할 수 있습니다.
+
+생성에 쓴 코드는 별도 저장소에 있습니다:
+  orca/projects/qwen/vfx/vfxlib.py    (수식 프리미티브)
+  orca/projects/qwen/vfx/generate.py  (생성·검증 드라이버)
+
+사양
+----
+- 정지 텍스처 52개: 512x512 RGBA PNG
+- 가산 합성 기준으로 만들었습니다. 밝기가 곧 형상이고 검은 부분은 투명하게
+  보입니다. RGB 와 알파에 같은 감쇠가 들어가 있습니다.
+- 프레임을 채우는 노이즈 계열은 방사형 감쇠를 걸어 두었습니다. 이게 없으면
+  파티클 쿼드의 사각 경계가 그대로 보입니다.
+
+계열별 목록
+-----------
+글로우      soft_glow glow_hard glow_dual orb_soft bokeh_hex
+링          ring_halo ring_thin ring_double ring_dashed portal_swirl
+스타·플레어 spark_star star_6 star_8 twinkle flare_anamorphic
+            impact_star spike_burst nova
+무기        muzzle_star muzzle_cone slash_arc bullet_tip
+에너지      lightning_bolt energy_beam arc_crackle aura_wisp
+마법        rune_circle sigil_triangle hex_grid mandala
+연기·유체   smoke_puff steam_curl liquid_blob foam_cluster splash_radial
+노이즈      curl_noise fbm_clouds worley_cells noise_streaks plasma
+스트릭      streak_taper comet ribbon_wave shard chevron_trail
+형상        droplet crescent ember feather glass_crack dust_motes
+            sparkle_field
+
+방향이 있는 텍스처
+------------------
+아래 넷은 방향을 전제로 그렸습니다. 회전 옵션과 함께 쓸 때 참고하세요.
+
+  muzzle_cone    +x (오른쪽)로 열리는 원뿔
+  bullet_tip     +x 방향으로 뾰족함
+  comet          위쪽에 머리, 아래로 꼬리
+  streak_taper   위가 넓고 아래로 갈수록 뾰족함
+
+품질이 약한 것
+--------------
+아래 둘은 의도한 형태에 못 미칩니다. 필요 없으면 지우세요.
+
+  sparkle_field  반짝임 대신 불규칙한 얼룩에 가깝습니다
+  dust_motes     점이 너무 성기고 어둡습니다

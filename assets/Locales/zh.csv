@@ -38,7 +38,7 @@ display_intense,强
 action_save,保存设置
 action_random,随机
 action_reset_defaults,恢复默认
-action_saved,已保存。下次启动时会自动应用。
+action_saved,已保存。重启后仍会保留这些设置。
 action_save_failed,保存失败。
 action_random_applied,已为品质 {0} 应用随机效果（种子 {1}）。
 action_reset_done,已恢复默认值。需保存才能保留。
@@ -286,7 +286,6 @@ section_basic,基础
 section_advanced,高级
 section_surface,表面与噪声
 section_motion,运动与拖尾
-section_flipbook,序列帧（拼贴图）
 section_ring,光环（环绕光点）
 section_share,设置分享
 field_roundness,圆润度
@@ -295,9 +294,6 @@ field_noise_strength,噪声强度
 field_noise_frequency,噪声频率
 field_rotation_speed,旋转速度
 field_drag,减速
-field_tiles_x,横向格数
-field_tiles_y,纵向格数
-field_flipbook_fps,播放速度（0=按寿命）
 field_ring_on,开启光环
 field_ring_off,关闭光环
 field_ring_count,光点数量
@@ -315,3 +311,110 @@ share_failed,无法读取该设置。
 field_ring_roll,光环侧倾
 field_ring_texture,光环图案
 field_ring_texture_same,与光环相同
+target_label,编辑对象
+target_grade,按品质
+target_class,按类别
+target_weapon,单把武器
+target_pick,选择武器
+target_editing,正在编辑：{0}
+target_using_override,使用专属设置
+target_using_grade,使用品质默认值
+target_remove,删除专属设置
+target_removed,已删除 {0} 的专属设置
+target_created,已创建 {0} 的专属设置
+target_pruned,已清理未修改的专属设置
+target_melee,近战
+target_need_world,进入游戏后才能查看武器列表
+library_title,选择武器
+library_search,搜索
+library_all,全部
+library_empty,没有符合条件的武器
+library_close,关闭
+library_count,{0} 把
+library_held,当前手持
+library_marked,已有专属设置
+confirm_title,未保存的更改
+confirm_body,有未保存的更改。不保存直接关闭会恢复到打开本窗口前的状态。
+confirm_save,保存并关闭
+confirm_discard,不保存直接关闭
+confirm_cancel,取消
+confirm_reverted,已还原未保存的更改
+target_class_on,已启用类别设置
+target_class_off,启用类别设置
+target_class_disabled,类别设置已关闭 — 请先启用
+particles_tab,武器粒子
+particles_enable,启用武器粒子
+particles_grade_enable,此品质启用
+particles_layers,图层
+particles_add_layer,添加图层
+particles_remove_layer,删除图层
+particles_layer_full,最多 {0} 个图层
+particles_layer_empty,请先添加一个图层
+particles_layer_on,开
+particles_layer_off,关
+particles_shape,形状
+particles_anchor,发射位置
+particles_anchor_whole,整把武器
+particles_anchor_muzzle,枪口
+particles_anchor_body,本体
+particles_anchor_barrel,枪管
+particles_field_intensity,亮度
+particles_field_size,粒子大小
+particles_field_rate,发射量
+particles_field_lifetime,寿命
+particles_field_speed,速度
+particles_field_spread,扩散
+particles_field_rise,上升
+particles_field_offset,前后位置
+particles_field_pulse,脉动幅度
+particles_field_pulse_speed,脉动周期
+library_marked_only,仅专属
+target_editing_off,正在编辑：{0} — 此武器已关闭
+particles_live_count,生效中
+particles_direction,发射方向
+particles_dir_sphere,四周
+particles_dir_forward,前
+particles_dir_backward,后
+particles_dir_up,上
+particles_dir_down,下
+particles_field_cone,张开角度
+particles_lifecycle,随寿命变化
+particles_use_color_end,单独设置结束色
+particles_color_end,结束色
+particles_field_alpha_start,起始透明度
+particles_field_alpha_end,结束透明度
+particles_field_size_start,起始大小
+particles_field_size_end,结束大小
+particles_look,外观
+particles_stretch,拉长
+particles_field_stretch,拉长程度
+particles_field_noise,扰动
+particles_field_spin,旋转
+particles_offset,位置微调
+particles_offset_x,左右
+particles_offset_y,上下
+particles_offset_z,前后
+particles_show_gizmo,显示发射位置
+particles_basics,颜色与数量
+particles_pulse_section,脉动
+shape_list_title,已创建的形状
+shape_list_empty,还没有创建形状
+shape_edit,编辑
+shape_delete,删除
+share_paste_title,粘贴设置代码
+share_paste_help,粘贴代码并确认后再应用。应用会覆盖当前正在编辑的设置。
+share_paste_apply,应用
+share_paste_clipboard,从剪贴板获取
+share_paste_ready,包含：{0}
+picker_title,选择形状
+picker_open,选择形状
+share_export_label,导出
+share_import_label,导入
+share_copy_tab,仅复制本页
+share_copy_all,复制全部
+share_copied_tab,已复制本页设置（{0} 字）
+share_copied_all,已复制全部设置（{0} 字）
+share_pasted_count,已应用：{0}
+share_open,设置分享
+particles_no_layers,此页没有图层
+particles_arc_spread,沿弧线扩散

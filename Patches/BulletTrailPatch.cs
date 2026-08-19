@@ -27,6 +27,7 @@ namespace WeaponAura.Patches
 
         private static bool _pendingValid;
         private static int _pendingQuality;
+        private static int _pendingWeaponTypeId;
 
         public static void ApplyPatches()
         {
@@ -111,6 +112,12 @@ namespace WeaponAura.Patches
                     return;
 
                 _pendingQuality = WeaponHelper.GetQuality(ammo);
+
+                // 잔상은 탄약 등급으로 고르지만, 이 총에 전용 설정이 걸려 있으면 그쪽이
+                // 이깁니다. 그래서 "무엇이 쐈는지"도 같이 기록해 둡니다.
+                var gun = __instance.Item;
+                _pendingWeaponTypeId = gun != null ? gun.TypeID : 0;
+
                 _pendingValid = true;
             }
             catch
@@ -138,7 +145,7 @@ namespace WeaponAura.Patches
             {
                 if (valid)
                 {
-                    BulletTrailSystem.Apply(__instance, _pendingQuality);
+                    BulletTrailSystem.Apply(__instance, _pendingQuality, _pendingWeaponTypeId);
                 }
                 else
                 {

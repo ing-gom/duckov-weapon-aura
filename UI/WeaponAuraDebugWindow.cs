@@ -509,10 +509,6 @@ namespace WeaponAura.UI
 
             Section("텍스처 / 렌더");
             DrawTexturePicker(p);
-            p.tilesX = Mathf.RoundToInt(Slider("플립북 가로", p.tilesX, 1f, 8f, "0"));
-            p.tilesY = Mathf.RoundToInt(Slider("플립북 세로", p.tilesY, 1f, 8f, "0"));
-            if (p.tilesX > 1 || p.tilesY > 1)
-                p.flipbookFps = Slider("플립북 FPS(0=수명)", p.flipbookFps, 0f, 60f, "0");
             p.colorIntensity = Slider("발광 배율", p.colorIntensity, 0.2f, 4f);
             p.rotationSpeed = Slider("회전(도/초)", p.rotationSpeed, -360f, 360f, "0");
             p.startRotationRandom = Slider("초기 회전 랜덤", p.startRotationRandom, 0f, 180f, "0");
@@ -615,7 +611,7 @@ namespace WeaponAura.UI
             if (GUILayout.Button("↻", GUILayout.Width(26f)))
             {
                 WeaponAuraResources.GetTextureNames(refresh: true);
-                _lastStatus = $"텍스처 폴더 재스캔: {WeaponAuraResources.GetTextureFolder() ?? "(경로 없음)"}";
+                _lastStatus = $"텍스처 폴더 재스캔: {WeaponAuraResources.GetUserTextureFolder() ?? "(경로 없음)"}";
                 WeaponAuraSystem.RebuildNow();
             }
             GUILayout.EndHorizontal();
@@ -713,8 +709,6 @@ namespace WeaponAura.UI
 
             var generated = WeaponAuraProfiles.CreateRandom(_randomSeed, target.name, target.minLevel);
             generated.textureName = target.textureName;
-            generated.tilesX = target.tilesX;
-            generated.tilesY = target.tilesY;
 
             target.CopyFrom(generated);
             WeaponAuraSystem.RebuildNow();
@@ -730,9 +724,6 @@ namespace WeaponAura.UI
             var preset = WeaponAuraProfiles.CreatePreset(kind, target.name, target.minLevel);
             // 텍스처 선택은 유지 — 형태/색만 프리셋으로 교체합니다.
             preset.textureName = target.textureName;
-            preset.tilesX = target.tilesX;
-            preset.tilesY = target.tilesY;
-            preset.flipbookFps = target.flipbookFps;
 
             target.CopyFrom(preset);
             WeaponAuraSystem.RebuildNow();
@@ -777,6 +768,38 @@ namespace WeaponAura.UI
             {
                 Helpers.ProjectileTrailDiagnostics.Dump();
                 _lastStatus = "원본 총알 프리팹 구조를 로그로 출력했습니다.";
+            }
+
+            if (GUILayout.Button("무기 카탈로그 진단 (전체 목록 · 프리팹 모델)"))
+            {
+                Helpers.WeaponCatalogDiagnostics.Dump();
+                _lastStatus = $"무기 {Helpers.WeaponCatalog.All.Count}개 " +
+                              $"(경로 {Helpers.WeaponCatalog.ResolvedSource}) — 로그를 확인하세요.";
+            }
+
+            if (GUILayout.Button("이 무기 내장 연출 덤프 (속성 색)"))
+            {
+                var player = CharacterMainControl.Main;
+                var holder = player != null ? player.agentHolder : null;
+                var heldAgent = holder != null ? holder.CurrentHoldItemAgent : null;
+
+                UnityEngine.Debug.Log(Helpers.WeaponAttributeEffect.Describe(
+                    heldAgent != null ? heldAgent.transform : null,
+                    Helpers.WeaponHelper.GetDisplayName(heldAgent?.Item)));
+
+                _lastStatus = "내장 연출을 로그로 출력했습니다.";
+            }
+
+            if (GUILayout.Button("무기 파티클 조사 (공통 vs 고유)"))
+            {
+                Helpers.WeaponAttributeEffect.SurveyCatalog();
+                _lastStatus = "파티클 조사를 로그로 출력했습니다.";
+            }
+
+            if (GUILayout.Button("무기 모델 생성 검증 (카탈로그 전체)"))
+            {
+                Helpers.WeaponGraphicProbe.Run();
+                _lastStatus = $"{Helpers.WeaponCatalog.All.Count}정 전체 검증 — 로그를 확인하세요.";
             }
 
             GUILayout.BeginHorizontal();

@@ -79,6 +79,10 @@ namespace WeaponAura.UI
 
             if (mode != MuzzleFlashMode.TintDefault && _emitter != null)
                 MuzzleFlashSystem.PreviewEmit(_emitter, Profile);
+
+            // 레이어는 모드와 무관하게 나갑니다 — 런타임(MuzzleFlashPatch)과 같습니다.
+            // 게임 화염을 그대로 두고 불티만 얹는 조합이 이 미리보기에서도 보여야 합니다.
+            PlayLayerBurst(Profile.layers, Profile.size);
         }
 
         protected override float NeededViewHeight()
@@ -95,6 +99,9 @@ namespace WeaponAura.UI
                 needed = Mathf.Max(needed, (Profile.sparkDistance + Profile.sparkSize) * 1.15f);
                 needed = Mathf.Max(needed, Mathf.Abs(Profile.sparkRise) * 2.6f + Profile.sparkSize);
             }
+
+            // 레이어는 모드와 무관하게 나가므로 분기 밖에서 잽니다.
+            needed = Mathf.Max(needed, LayerViewHeight(Profile.layers));
 
             return needed;
         }
